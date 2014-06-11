@@ -24,17 +24,19 @@ using namespace std;
 
 class TileAnimation {
 public:
-    TileAnimation(string type, string direction);
-    void setNodes(vector<Vec3f> nodes);
+    TileAnimation(string type, string direction, vector<Vec3f> nodes, ColorAf color);
+    bool isFinished();
     void draw(int pxlW, int pxlH);
     void drawFold(int pxlW, int pxlH);
     void drawShift(int pxlW, int pxlH);
     void drawExplode(int pxlW, int pxlH);
     void drawFall(int pxlW, int pxlH);
     
+    bool finished;
     vector<Vec3f> nodes; // original nodes to operate on
     string type;
     string direction;
+    ColorAf color;
     Anim<float> a; // this "animates" from 0 to 1 over a specific time
 };
 
@@ -51,11 +53,15 @@ public:
     
     void setTiles();
     void setNodes();
+    void setTileColor(int x, int y, ColorAf col);
+    void setTileColorNeighbour(int x, int y, ColorAf col, string nb);
+    
+    vector<Vec3f> getTileNodes(int, int);
     
     Vec2i dimensions;
     vector<Vec3f> nodes;
     
-    vector<Colorf> tileColors;
+    vector<ColorAf> tileColors;
     vector<TileAnimation> tileAnimations;
     
     gl::Fbo mFbo;

@@ -3,10 +3,10 @@
 	<profile name="default">
 		<map id="1" display="1">
 			<warp method="perspective" width="2" height="2" brightness="1">
-				<controlpoint x="0.1484375" y="0.167500004"/>
-				<controlpoint x="0.844531238" y="0.057500001"/>
-				<controlpoint x="0.925000012" y="0.807500005"/>
-				<controlpoint x="0.0101562496" y="0.848749995"/>
+				<controlpoint x="0.00468750019" y="0.00625000009"/>
+				<controlpoint x="0.903124988" y="0.166666672"/>
+				<controlpoint x="0.998437524" y="0.995833337"/>
+				<controlpoint x="0.00468750019" y="0.987500012"/>
 			</warp>
 		</map>
 	</profile>

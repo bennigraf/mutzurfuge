@@ -51,6 +51,9 @@ public:
 void checkerApp::setup() {
 	
     //	setFullScreen(true);
+//    gl::enableAlphaBlending();
+//    gl::enableAdditiveBlending();
+//    gl::enableWireframe();
 	
 	// grid stuff
     //	oneGrid = new Grid(24, 16);
@@ -125,8 +128,10 @@ void checkerApp::update() {
 }
 
 void checkerApp::draw() {
+    gl::enableAlphaBlending();
 	// clear out the window with black
-	gl::clear( Color( 0, 0, 0 ) );
+	gl::clear(Colorf(0.f, 0.f, 0.f) );
+//    gl::clear(Color::white());
 	
 	// draws to fbo only
 	oneGrid->draw();

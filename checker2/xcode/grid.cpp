@@ -8,6 +8,7 @@
 
 #include "grid.h"
 #include "cinder/gl/Fbo.h"
+#include "cinder/Rand.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -22,7 +23,7 @@ Grid::Grid(int width, int height) {
 void Grid::setup(int pxlWidth, int pxlHeight) {
     console() << "Grid loaded!" << endl;
     
-    mFbo = gl::Fbo(pxlWidth, pxlHeight);
+    mFbo = gl::Fbo(pxlWidth, pxlHeight, GL_RGBA);
     mFbo.getTexture(0).setFlipped(true);
 }
 
@@ -31,7 +32,7 @@ void Grid::setTiles() {
     tileColors.reserve(dimensions.x * dimensions.y);
     for (int i = 0; i < dimensions.x * dimensions.y; i++) {
         //        tileColors.push_back(Colorf(i / 255.f, 1.f, 0.f));
-        tileColors.push_back(Colorf(1.f, 1.f, 1.f));
+        tileColors.push_back(ColorAf(1.f, 1.f, 1.f, 1.f));
     }
 }
 void Grid::setNodes() {
@@ -47,6 +48,15 @@ void Grid::setNodes() {
 }
 
 void Grid::update() {
+    vector<int> removeMe;
+    for (int i = tileAnimations.size()-1; i >= 0; i--) {
+        if (tileAnimations[i].isFinished()) {
+            removeMe.push_back(i);
+        }
+    }
+    for (int i = 0; i < removeMe.size(); i++) {
+        tileAnimations.erase(tileAnimations.begin() + removeMe[i]);
+    }
     
 }
 void Grid::updateDimensions(int x, int y) {
@@ -69,43 +79,70 @@ void Grid::oscMessage(osc::Message msg) {
         float r = msg.getArgAsFloat(2);
         float g = msg.getArgAsFloat(3);
         float b = msg.getArgAsFloat(4);
-        tileColors[y * dimensions.x + x] = Colorf(r, g, b);
-        console() << "setting stuff" << endl;
+        if(tileColors.size() > y*dimensions.x+x) {
+            tileColors[y * dimensions.x + x] = ColorAf(r, g, b, 1);
+        }
+//        console() << "setting stuff " << ColorAf(r, g, b, 1) << endl;
     }
     // trigger tile animation -- i.e. fold over, direction
     // message: /grid type tilex tiley direction
     // type is: 'fold', 'shift', 'fall', 'explode'
     // direction is: 'up', 'left', 'down', 'right'
-    if(msg.getNumArgs() == 4 &&
+    if((msg.getNumArgs() == 4 || msg.getNumArgs() == 5) &&
        msg.getArgType(0) == osc::TYPE_STRING &&
        msg.getArgType(1) == osc::TYPE_INT32 &&
        msg.getArgType(2) == osc::TYPE_INT32 &&
        msg.getArgType(3) == osc::TYPE_STRING) {
-        console() << "folding something... " << msg.getArgAsString(0);
-        // how would I go from here??
-        // 1. create an TileAnimation-item with a type, tilepos and direction
-        // 1.a add it to a TileAnimation-vector living in this grid instance
-        // 2. inside this, there's a draw function which draws only that specific tile
-        // 2.a use app:timeline for easing
-        // 3. deconstruct the object on finish somehow and delete it from the vector...
-        //      maybe some kind of callback?
-        TileAnimation ta(msg.getArgAsString(0), msg.getArgAsString(3));
-        vector<Vec3f> animNodes;
+//        console() << "folding something... " << msg.getArgAsString(0);
+        string type = msg.getArgAsString(0);
         int tPosX = msg.getArgAsInt32(1);
         int tPosY = msg.getArgAsInt32(2);
-        int ndxTL = tPosY * (dimensions.x + 1) + tPosX;
-        int ndxTR = tPosY * (dimensions.x + 1) + tPosX + 1;
-        int ndxBL = (tPosY + 1) * (dimensions.x + 1) + tPosX;
-        int ndxBR = (tPosY + 1) * (dimensions.x + 1) + tPosX + 1;
-        animNodes.push_back(nodes[ndxTL]);
-        animNodes.push_back(nodes[ndxTR]);
-        animNodes.push_back(nodes[ndxBR]);
-        animNodes.push_back(nodes[ndxBL]);
-        ta.setNodes(animNodes);
+        string dir = msg.getArgAsString(3);
+        ColorAf tileC = tileColors[tPosY * dimensions.x + tPosX];
+        TileAnimation ta(type, dir, getTileNodes(tPosX, tPosY), tileC);
         tileAnimations.push_back(ta);
-//        tileAnimations
+        // clear on with special flag
+        if(msg.getNumArgs() == 5 &&
+           msg.getArgType(4) == osc::TYPE_INT32 &&
+           msg.getArgAsInt32(4) == 1) {
+            tileColors[tPosY * dimensions.x + tPosX] = ColorAf(1, 1, 1, 1);
+            timeline().add([=]{ setTileColorNeighbour(tPosX, tPosY, tileC, dir); },
+                           timeline().getCurrentTime() + 0.28);
+        }
     }
-    
+}
+vector<Vec3f> Grid::getTileNodes(int posx, int posy) {
+    int ndxTL = posy * (dimensions.x + 1) + posx;
+    int ndxTR = ndxTL + 1;
+    int ndxBL = ndxTR + dimensions.x;
+    int ndxBR = ndxBL + 1;
+    vector<Vec3f> thisnodes;
+    thisnodes.push_back(nodes[ndxTL]);
+    thisnodes.push_back(nodes[ndxTR]);
+    thisnodes.push_back(nodes[ndxBR]);
+    thisnodes.push_back(nodes[ndxBL]);
+    return thisnodes;
+}
+void Grid::setTileColor(int x, int y, ColorAf col) {
+    tileColors[y * dimensions.x + x] = col;
+}
+void Grid::setTileColorNeighbour(int x, int y, ColorAf col, string nb) {
+    Vec2i newTile(-1, -1);
+    if (nb == "top" && y > 1) {
+        newTile.set(x, y-1);
+    }
+    if(nb == "left" && x > 1) {
+        newTile.set(x-1, y);
+    }
+    if (nb == "bottom" && y < dimensions.y - 1) {
+        newTile.set(x, y+1);
+    }
+    if(nb == "right" && x < dimensions.x - 1) {
+        newTile.set(x+1, y);
+    }
+    if (newTile.x >= 0) {
+        setTileColor(newTile.x, newTile.y, col);
+    }
 }
 
 void Grid::drawBasicGrid() {
@@ -125,9 +162,12 @@ void Grid::drawBasicGrid() {
             float xsize = pxlWidth/(float)dimensions.x - 1;
             float ysize = pxlHeight/(float)dimensions.y - 1;
 
-            gl::color(tileColors[h * dimensions.x + w]);
 //            gl::color(Colorf(1.f/(float)dimensions.y * (float)h, 1.f, 1.f));
+//            console() << tileColors[h * dimensions.x + w] << endl;
+//            gl::color(ColorAf(1, 0, 1, 1));
+            gl::color(tileColors[h * dimensions.x + w]);
             gl::drawSolidRect(Rectf(xpos, ypos, xpos + xsize, ypos + ysize));
+//            console() << "drawing" <<endl;
 //            gl::drawLine(Vec2f(xpos, ypos), Vec2f(xpos + xsize, ypos + ysize));
         }
     }
@@ -137,8 +177,13 @@ void Grid::drawBasicGrid() {
 // drawing pipeline, handles animations as well
 void Grid::draw() {
     mFbo.bindFramebuffer();
+    // this is done to set the right viewport
+    Area viewport = gl::getViewport();
+    gl::setViewport(mFbo.getBounds() );
+    
     gl::pushMatrices();
-    gl::clear(Colorf(0.f, 0.f, 0.f));
+    gl::setMatricesWindowPersp(mFbo.getSize() );
+    gl::clear(Colorf(0, 0, 0));
     
     drawBasicGrid();
     
@@ -147,19 +192,30 @@ void Grid::draw() {
     }
     
     gl::popMatrices();
+    // restore projection matrix thingy
+    gl::setViewport(viewport);
     mFbo.unbindFramebuffer();
 }
 
-TileAnimation::TileAnimation(string aType, string aDirection) {
+
+
+
+
+
+TileAnimation::TileAnimation(string aType, string aDirection, vector<Vec3f> tileNodes, ColorAf aColor) {
+    finished = false;
     type = aType;
     direction = aDirection;
+    nodes = tileNodes;
+    color = aColor;
     a = 0.f;
-//    a = 0.5;
     nodes.reserve(4);
-    timeline().apply(&a, 2.0f, 5.0f);
+    timeline().apply(&a, 1.0f, 0.28f, EaseInOutQuad());
+//    timeline().apply(&a, 1.0f, 0.28f, EaseInOutCubic());
+    
 }
-void TileAnimation::setNodes(vector<Vec3f> someNodes) {
-    nodes = someNodes;
+bool TileAnimation::isFinished() {
+    return a >= 1.f;
 }
 void TileAnimation::draw(int pxlW, int pxlH) {
     // switch doesn't work with strings... duh
@@ -175,36 +231,58 @@ void TileAnimation::draw(int pxlW, int pxlH) {
     }
 }
 void TileAnimation::drawFold(int pxlW, int pxlH) {
-    Vec3f scl(pxlW, pxlH, 1);
-    Vec3f t(0, 0, 10);
+    Vec3f scl(pxlW, pxlH, 1.f);
+    Vec3f t(0, 0, 0.1);
     Vec3f size(nodes[2] - nodes[0]);
-    Vec3f cntr(nodes[2] - size/2);
     vector<Vec3f> newNodes;
-    newNodes[0] = nodes[0];
-    newNodes[0].x = nodes[0].x + a * size.x * 2;
-
-    // right:
-    // tl.x = tl.x + a
-    // tl.y = tl.y
-    // tr = tr
-    // br = br
-    // bl.x = bl.x + a
-    // bl.y = bl.y
+    for (int i = 0; i < nodes.size(); i++) {
+        newNodes.push_back(nodes[i]);
+    }
+    
+    // fold top:
+    if (direction == "top") {
+        newNodes[2].y = nodes[2].y + a * size.y * -2;
+        newNodes[3].y = nodes[3].y + a * size.y * -2;
+        newNodes[2].x = nodes[2].x + math<float>::sin(a*M_PI) * size.x * 0.3;
+        newNodes[3].x = nodes[3].x + math<float>::sin(a*M_PI) * size.x * -0.3;
+        newNodes[2].z = math<float>::sin(a * M_PI) * (float)size.x * 2.f;
+        newNodes[3].z = math<float>::sin(a * M_PI) * (float)size.x * 2.f;
+    }
+    // fold right:
+    if (direction == "right") {
+        newNodes[0].x = nodes[0].x + a * size.x * 2;
+        newNodes[3].x = nodes[3].x + a * size.x * 2;
+        newNodes[0].y = nodes[0].y + math<float>::sin(a*M_PI) * size.y * -0.3;
+        newNodes[3].y = nodes[3].y + math<float>::sin(a*M_PI) * size.y * -0.3;
+        newNodes[0].z = math<float>::sin(a * M_PI) * (float)size.x * 2.f;
+        newNodes[3].z = math<float>::sin(a * M_PI) * (float)size.x * 2.f;
+    }
+    // fold down:
+    if (direction == "down") {
+        newNodes[0].y = nodes[0].y + a * size.y * 2;
+        newNodes[1].y = nodes[1].y + a * size.y * 2;
+        newNodes[0].x = nodes[0].x + math<float>::sin(a*M_PI) * size.x * -0.3;
+        newNodes[1].x = nodes[1].x + math<float>::sin(a*M_PI) * size.x * 0.3;
+        newNodes[0].z = math<float>::sin(a * M_PI) * (float)size.x * 2.f;
+        newNodes[1].z = math<float>::sin(a * M_PI) * (float)size.x * 2.f;
+    }
+    // fold left:
+    if (direction == "left") {
+        newNodes[1].x = nodes[1].x + a * size.x * -2;
+        newNodes[2].x = nodes[2].x + a * size.x * -2;
+        newNodes[1].y = nodes[1].y + math<float>::sin(a*M_PI) * size.y * -0.3;
+        newNodes[2].y = nodes[2].y + math<float>::sin(a*M_PI) * size.y * -0.3;
+        newNodes[1].z = math<float>::sin(a * M_PI) * (float)size.x * 2.f;
+        newNodes[2].z = math<float>::sin(a * M_PI) * (float)size.x * 2.f;
+    }
     
     gl::pushMatrices();
-    gl::scale(a * 5, a * 5);
-    gl::color(0.f, 1.f, 0.f);
-    gl::lineWidth(10);
-    gl::drawLine(nodes[0]*scl+t, nodes[1]*scl+t);
-    gl::drawLine(nodes[1]*scl+t, nodes[2]*scl+t);
-    gl::drawLine(nodes[2]*scl+t, nodes[3]*scl+t);
-    gl::drawLine(nodes[3]*scl+t, nodes[0]*scl+t);
-    gl::color(0.f, 0.f, 1.f);
+    gl::color(color);
     glBegin(GL_QUAD_STRIP); // start drawing
-    gl::vertex(nodes[0] * scl+t);
-    gl::vertex(nodes[1] * scl+t);
-    gl::vertex(nodes[3] * scl+t);
-    gl::vertex(nodes[2] * scl+t);
+    gl::vertex(newNodes[0] * scl+t);
+    gl::vertex(newNodes[1] * scl+t);
+    gl::vertex(newNodes[3] * scl+t);
+    gl::vertex(newNodes[2] * scl+t);
     glEnd(); // stop drawing
     gl::popMatrices();
 }
