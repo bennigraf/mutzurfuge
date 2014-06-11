@@ -1,0 +1,5 @@
+Panel : 
+Grid X : 34
+Grid Y : 21
+Load state : 
+Save state : 
