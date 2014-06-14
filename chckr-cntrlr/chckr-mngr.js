@@ -1,166 +1,73 @@
 var osc = require('node-osc');
 var oscCli = new osc.Client('127.0.0.1', 5000);
+var Colr = require("tinycolor2");
+// color = new Colr("hsv 0.3 1 1");
 
-var Creature = require('./creature.js');
+var Creature = require('./Creature.js');
+var Grid = require('./Grid.js');
+var World = require('./World.js');
 
+var wrld = new World();
+wrld.setOscServer(12332, '0.0.0.0');
+wrld.setTcpServer(12333, '0.0.0.0');
 
-// a grid 'plays out' part of the world via ip/port
-// defines scope on which to act
-function Grid(id, w, h, offsetx, offsety) {
-	this.oscSndr = null;
-	this.id = id;
-	this.width = w;
-	this.height = h;
-	this.offsetx = offsetx;
-	this.offsety = offsety;
-}
-Grid.prototype.setAddress = function(addr, port) {
-	this.oscSndr = new osc.Client(addr, port);
-}
-Grid.prototype.hasTile = function(x, y) {
-	if(x >= this.offsetx && x < this.offsetx+this.width
-		&& y >= this.offsety && y < this.offsety+this.height) {
-		return true;
-	}
-	return false;
-}
-Grid.prototype.setTile = function(x, y, r, g, b) {
-	var ln = 0.000000001;
-	// console.log(this.oscSndr);
-	if(this.oscSndr) {
-		this.oscSndr.send('/grid', x-this.offsetx, y-this.offsety, r+ln, g+ln, b+ln); // ln makes sure floats are being sent
-	}
-}
+// each grid has one or more transitions to other grids; 
+// and obviously a size and an address
+// and a gravity would be nice
+wrld.addGrid({
+	id: 732,
+	size: [43, 17],
+	pos: [0, 0],
+	address: ["10.0.0.1", 5000],
+	gravity: 'top',
+	transitions: [['top', 213]]
+});
+wrld.addGrid({
+	id: 213,
+	size: [43, 40],
+	// size: [26, 20],
+	pos: [0, 0],
+	address: ["127.0.0.1", 5000],
+	gravity: 'none',
+	transitions: [['top', 142], ['bottom', 732]]
+});
+// this one is "upside down"
+wrld.addGrid({
+	id: 142,
+	size: [43, 17],
+	pos: [0, 0],
+	address: ["10.0.0.3", 5000],
+	gravity: 'down',
+	transitions: [['bottom', 732]]
+});
 
-
-
-function World(w, h) {
-	this.width = w;
-	this.height = h;
-	
-	this.oscServer = new osc.Server(12332, '0.0.0.0');
-	
-	this.creatures = new Array();
-	
-	this.tiles = new Array();
-	this.clearTiles();
-	
-	this.grids = new Array();
-	this.grids.push(new Grid(213, 24, 16, 0, 0));
-	this.grids.push(new Grid(2, 24, 36, 0, 16));
-	this.grids.push(new Grid(3, 24, 16, 0, 52));
-	this.grids[0].setAddress("127.0.0.1", 5000);
-	this.grids[1].setAddress("10.0.0.2", 5000);
-	this.grids[2].setAddress("10.0.0.3", 5000);
-	
-}
-World.prototype.clearTiles = function() {
-	this.tiles = new Array();
-	for (var i=0; i < this.width; i++) {
-		this.tiles[i] = new Array();
-		for (var j=0; j < this.height; j++) {
-			this.tiles[i][j] = {
-				settled: false,
-				age: 0,
-				x: i,
-				y: j
-			}
-		};
-	};
-}
-World.prototype.setTile = function(x, y, r, g, b) {
-	var ln = 0.000000001;
-	for (var i=0; i < this.grids.length; i++) {
-		if(this.grids[i].hasTile(x, y)) {
-			this.grids[i].setTile(x, y, r, g, b);
-		}
-	};
-}
-World.prototype.tick = function() {
-	var toDie = new Array();
-	for (var i = 0; i < this.creatures.length; i++) {
-		this.creatures[i].tick();
-		if(!this.creatures[i].alive) {
-			toDie.push(i);
-		}
-	}
-	// reverse to not mess up indizes before deletion
-	// (assumes that the values of toDie are sorted ascending)
-	// to be sure, sort first, see http://de.selfhtml.org/javascript/objekte/array.htm#sort
-	var numsort = function (a, b) { return a - b; };
-	if(toDie.length > 0) {
-		toDie.sort(numsort);
-		for (var i = toDie.length - 1; i >= 0; i--) {
-			var creatureIndex = toDie[i];
-			this.creatures.splice(creatureIndex, 1);
-		}
-	}
-}
-World.prototype.findGridCoords = function(boardid, xpos, ypos) {
-	var spwncrds = {found: false, x: 0, y: 0, grid: null};
-	for (var i = 0; i < this.grids.length; i++) {
-		var g = this.grids[i];
-		if(g.id == boardid) {
-			spwncrds.found = true;
-			spwncrds.x = Math.round(g.width * xpos) + g.offsetx;
-			spwncrds.y = Math.round(g.height * ypos) + g.offsety;
-			return [spwncrds.x, spwncrds.y];
-		}
-	}
-	return false;
-}
-World.prototype.run = function() {
-	/*
-	setInterval(function() {
-		console.log("running");
-		this.crtr = new Creature(this);
-		this.crtr.spawn(4, 4);
-		this.interval = setInterval(function() {
-			this.crtr.tick();
-		}.bind(this), 68);
-		setTimeout(function() {
-			console.log("clearing");
-			clearInterval(this.interval);
-			this.clearTiles();
-		}.bind(this), 8500);
-	}.bind(this), 9000);
-	*/
-	
-	this.oscServer.on("message", function (msg, rinfo) {
-		console.log("got message", msg)
-		// dirty hack because oF needs to send bundles for some stupid reason...
-		if(msg[0] == '#bundle') {
-			msg = msg[2];
-		}
-		if(msg[0] == '/hit') {
-			boardid = msg[1] || 0;
-			xpos = msg[2] || 0.5;
-			ypos = msg[3] || 0.5;
-			console.log("hit!", boardid, xpos, ypos);
-			var c = new Creature(this);
-			var spwnCoords = this.findGridCoords(boardid, xpos, ypos);
-			if(spwnCoords) {
-				c.spawn(spwnCoords[0], spwnCoords[1]);
-				this.creatures.push(c);
-			} else {
-				console.log("couldn't find spawn point for creature");
-			}
-		}
-	}.bind(this));
-	
-	
-	this.interval = setInterval(function() {
-		this.tick();
-	}.bind(this), 68);
-	
-}
-// World.prototype.stop = function() {
-// 	clearInterval(this.interval);
-// 	this.clearTiles();
-// }
-
-var wrld = new World(24, 68);
+// runs the world! How epic!
 wrld.run();
+
+wrld.spawnCreature(213, Math.random(),Math.random());
+wrld.spawnCreature(213, Math.random(), Math.random());
+wrld.spawnCreature(213, Math.random(), Math.random());
+wrld.spawnCreature(142, Math.random(), Math.random());
+wrld.spawnCreature(732, Math.random(), Math.random());
+
+////////////////////////// now:
+// Creatures are 'blind', they don't see the whole world and what's going on it.
+// They live in their own space (that means have their own array of tiles).
+// On each 'move' they can check what's going on on specific tiles in their 
+// neighbourhood, thoug. So they kind of feel their direct surroundings.
+// On each world tick the creature tells the world where it wants to be (which
+// tiles are active). The world manages those tiles and draws them to the right
+// grids (and also manages addition of color values of tiles etc). 
+//
+// So I need:
+// * Creatures that define their own space/tileset
+// * World that has a master-copy of all existing tiles, incl. their state
+// 	(occupied (hard or soft), id of creature who occupies, clr of creature)
+// * World-Api to 
+//	* check for state of tile (free, occupied, ...)
+//	* check if tile is valid at all or is outside of the world
+
+
 
 
 
