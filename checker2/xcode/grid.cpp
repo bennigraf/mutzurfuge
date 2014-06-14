@@ -66,7 +66,7 @@ void Grid::updateDimensions(int x, int y) {
 }
 
 void Grid::oscMessage(osc::Message msg) {
-    // message to set tile color
+    // ========= message to set tile color
     // message should be int x, int y, float r, float g, float b
     if(msg.getNumArgs() == 5 &&
        msg.getArgType(0) == osc::TYPE_INT32 &&
@@ -84,7 +84,43 @@ void Grid::oscMessage(osc::Message msg) {
         }
 //        console() << "setting stuff " << ColorAf(r, g, b, 1) << endl;
     }
-    // trigger tile animation -- i.e. fold over, direction
+    // ========= message to clear grid
+    if(msg.getArgType(0) == osc::TYPE_STRING &&
+       msg.getArgAsString(0) == "clear") {
+        for (int i = 0; i < tileColors.size(); i++) {
+            tileColors[i] = ColorAf(1, 1, 0, 1);
+        }
+//        console() << "clear" << endl;
+    }
+    
+    // ========= message to set many
+    if(msg.getArgType(0) == osc::TYPE_STRING &&
+       msg.getArgAsString(0) == "setMany" &&
+       msg.getArgType(1) == osc::TYPE_INT32) {
+        int offset = msg.getArgAsInt32(1);
+//        for (int i = 0; i < tileColors.size(); i++) {
+//            int ndx = 2 + i * 3;
+//            console() << ndx << " " << msg.getNumArgs() << endl;
+//            if() {
+//                float r = msg.getArgAsFloat(ndx + 0);
+//                float g = msg.getArgAsFloat(ndx + 1);
+//                float b = msg.getArgAsFloat(ndx + 2);
+//                tileColors[i] = ColorAf(r, g, b, 1);
+//            }
+//        }
+        for (int i = 2; i < msg.getNumArgs(); i++) {
+            int clrNdx = offset + i / 3;
+            if (tileColors.size() >= clrNdx) {
+                float r = msg.getArgAsFloat(i++);
+                float g = msg.getArgAsFloat(i++);
+                float b = msg.getArgAsFloat(i);
+                tileColors[clrNdx] = ColorAf(r, g, b, 1);
+//                console() << r << " " << g << " " << b << endl;
+            }
+        }
+    }
+    
+    // ========= trigger tile animation -- i.e. fold over, direction
     // message: /grid type tilex tiley direction
     // type is: 'fold', 'shift', 'fall', 'explode'
     // direction is: 'up', 'left', 'down', 'right'
@@ -159,8 +195,10 @@ void Grid::drawBasicGrid() {
             Vec3f node = nodes[ndx];
             float xpos = node.x * pxlWidth;
             float ypos = node.y * pxlHeight;
-            float xsize = pxlWidth/(float)dimensions.x - 1;
-            float ysize = pxlHeight/(float)dimensions.y - 1;
+//            float xsize = pxlWidth/(float)dimensions.x - 1;
+//            float ysize = pxlHeight/(float)dimensions.y - 1;
+            float xsize = pxlWidth/(float)dimensions.x;
+            float ysize = pxlHeight/(float)dimensions.y;
 
 //            gl::color(Colorf(1.f/(float)dimensions.y * (float)h, 1.f, 1.f));
 //            console() << tileColors[h * dimensions.x + w] << endl;
@@ -183,7 +221,7 @@ void Grid::draw() {
     
     gl::pushMatrices();
     gl::setMatricesWindowPersp(mFbo.getSize() );
-    gl::clear(Colorf(0, 0, 0));
+    gl::clear(Colorf(1, 1, 1));
     
     drawBasicGrid();
     

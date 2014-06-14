@@ -18,13 +18,13 @@
 
 #endif /* defined(__checker__grid__) */
 
-using namespace cinder;
-using namespace std;
+//using namespace cinder;
+//using namespace std;
 
 
 class TileAnimation {
 public:
-    TileAnimation(string type, string direction, vector<Vec3f> nodes, ColorAf color);
+    TileAnimation(std::string type, std::string direction, std::vector<cinder::Vec3f> nodes, cinder::ColorAf color);
     bool isFinished();
     void draw(int pxlW, int pxlH);
     void drawFold(int pxlW, int pxlH);
@@ -33,11 +33,11 @@ public:
     void drawFall(int pxlW, int pxlH);
     
     bool finished;
-    vector<Vec3f> nodes; // original nodes to operate on
-    string type;
-    string direction;
-    ColorAf color;
-    Anim<float> a; // this "animates" from 0 to 1 over a specific time
+    std::vector<cinder::Vec3f> nodes; // original nodes to operate on
+    std::string type;
+    std::string direction;
+    cinder::ColorAf color;
+    cinder::Anim<float> a; // this "animates" from 0 to 1 over a specific time
 };
 
 
@@ -49,22 +49,22 @@ public:
     void updateDimensions(int x, int y);
     void draw();
     void drawBasicGrid();
-    void oscMessage(osc::Message);
+    void oscMessage(cinder::osc::Message);
     
     void setTiles();
     void setNodes();
-    void setTileColor(int x, int y, ColorAf col);
-    void setTileColorNeighbour(int x, int y, ColorAf col, string nb);
+    void setTileColor(int x, int y, cinder::ColorAf col);
+    void setTileColorNeighbour(int x, int y, cinder::ColorAf col, std::string nb);
     
-    vector<Vec3f> getTileNodes(int, int);
+    std::vector<cinder::Vec3f> getTileNodes(int, int);
     
-    Vec2i dimensions;
-    vector<Vec3f> nodes;
+    cinder::Vec2i dimensions;
+    std::vector<cinder::Vec3f> nodes;
     
-    vector<ColorAf> tileColors;
-    vector<TileAnimation> tileAnimations;
+    std::vector<cinder::ColorAf> tileColors;
+    std::vector<TileAnimation> tileAnimations;
     
-    gl::Fbo mFbo;
+    cinder::gl::Fbo mFbo;
 
 };
 

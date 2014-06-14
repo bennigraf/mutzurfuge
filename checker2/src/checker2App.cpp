@@ -13,6 +13,10 @@
 // gui-stuff
 #include "SimpleGUI.h"
 
+#include "cinder/qtime/QuickTime.h"
+#include "cinder/gl/Texture.h"
+#include "cinder/Utilities.h"
+
 using namespace ci;
 using namespace ci::app;
 using namespace ph::warping; // warping
@@ -46,6 +50,9 @@ public:
     Grid* oneGrid;
 	int gridx; // num of gridtiles
 	int gridy;
+    
+    qtime::MovieGlRef		mMovie;
+    gl::Texture				mFrameTexture, mInfoTexture;
 };
 
 void checkerApp::setup() {
@@ -77,11 +84,16 @@ void checkerApp::setup() {
 	gui->lightColor = ColorA(1, 1, 0, 1);
     //	gui->addLabel("Grid Control");
 	gui->addPanel();
-	gui->addParam("Grid X", &gridx, 1, 40, 24);
-	gui->addParam("Grid Y", &gridy, 1, 40, 16);
+	gui->addParam("Grid X", &gridx, 1, 45, 24);
+	gui->addParam("Grid Y", &gridy, 1, 45, 16);
 	gui->addButton("Load state")->registerClick(this, &checkerApp::loadState);
 	gui->addButton("Save state")->registerClick(this, &checkerApp::saveState);
 	gui->load(CONFIG_FILE);
+    
+    
+    mMovie = qtime::MovieGl::create("anna.mov");
+    mMovie->setLoop();
+    mMovie->play();
 }
 bool checkerApp::loadState(MouseEvent event) {
 	gui->load(CONFIG_FILE);
@@ -124,7 +136,13 @@ void checkerApp::update() {
 		if(message.getAddress() == "/grid") {
 			oneGrid->oscMessage(message);
 		}
+        if(message.getAddress() == "/video") {
+            mMovie->reset();
+        }
 	}
+    
+    if( mMovie )
+		mFrameTexture = mMovie->getTexture();
 }
 
 void checkerApp::draw() {
@@ -140,7 +158,8 @@ void checkerApp::draw() {
 	for(WarpConstIter itr=mWarps.begin();itr!=mWarps.end();++itr) {
 		WarpRef warp(*itr);
 		ci::gl::Texture tex = oneGrid->mFbo.getTexture();
-		warp->draw(tex);
+//		warp->draw(tex);
+        warp->draw(mFrameTexture);
 	}
 	
 	gui->draw();
