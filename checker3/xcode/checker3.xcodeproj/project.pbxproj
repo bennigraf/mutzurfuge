@@ -78,13 +78,15 @@
 		ED482C2907164F1B9C2C77E1 /* OscReceivedElements.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 239EEA5053C24BCF8ADB4D5B /* OscReceivedElements.cpp */; };
 		F18E18DB1B444F228D450DD0 /* syphonClient.mm in Sources */ = {isa = PBXBuildFile; fileRef = B04F9F9CB13747ABAD182B26 /* syphonClient.mm */; };
 		F6671CB0165F430DAD134663 /* b2PulleyJoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 89125978D0E848FBBC28107C /* b2PulleyJoint.cpp */; };
-		F7420E8F189F42CCB5ECFD8F /* QuickTime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4F3AAD760B5E4FCC8D4C6F4D /* QuickTime.framework */; };
 		F8E29EB3AB25450A933FBC5A /* b2PrismaticJoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4F6A98CAFFC54DAF84BBDED6 /* b2PrismaticJoint.cpp */; };
 		FB5D7E5CADC94B05899911EF /* OscBundle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8019402D1E6C45C19745468A /* OscBundle.cpp */; };
 		FBA21B6B284549DDB8A1DB27 /* NetworkingUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5D69073630E44F982F7F049 /* NetworkingUtils.cpp */; };
 		FD87EEF1CF61471DB18DB29C /* b2DistanceJoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BC628BB1A95049448DCC67C9 /* b2DistanceJoint.cpp */; };
 		FE0F5D59194BC49B00C674FC /* Syphon.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6106858AD18046B6A2956994 /* Syphon.framework */; };
 		FE0F5D5C194BC69400C674FC /* grid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE0F5D5A194BC69400C674FC /* grid.cpp */; };
+		FE607F82194CA4E50076EE24 /* SimpleGUI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 180085BCF5494C3C91C2A756 /* SimpleGUI.cpp */; };
+		FE607F84194CA5910076EE24 /* pf_tempesta_seven.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FE607F83194CA5910076EE24 /* pf_tempesta_seven.ttf */; };
+		FE607F86194CA6510076EE24 /* QuickTime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE607F85194CA6510076EE24 /* QuickTime.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -156,7 +158,6 @@
 		422FD40A953B4054B8745CC0 /* b2BroadPhase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = b2BroadPhase.h; path = ../../../cinder_0.8.5_mac/blocks/Box2D/src/Box2D/Collision/b2BroadPhase.h; sourceTree = "<group>"; };
 		4A5E8A128F9148E1BB220130 /* NetworkingUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NetworkingUtils.h; path = ../../../cinder_0.8.5_mac/blocks/OSC/src/ip/NetworkingUtils.h; sourceTree = "<group>"; };
 		4EF970AB24724AF3AC3B86A5 /* b2WeldJoint.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = b2WeldJoint.h; path = ../../../cinder_0.8.5_mac/blocks/Box2D/src/Box2D/Dynamics/Joints/b2WeldJoint.h; sourceTree = "<group>"; };
-		4F3AAD760B5E4FCC8D4C6F4D /* QuickTime.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickTime.framework; path = System/Library/Frameworks/QuickTime.framework; sourceTree = SDKROOT; };
 		4F6A98CAFFC54DAF84BBDED6 /* b2PrismaticJoint.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.cpp; name = b2PrismaticJoint.cpp; path = ../../../cinder_0.8.5_mac/blocks/Box2D/src/Box2D/Dynamics/Joints/b2PrismaticJoint.cpp; sourceTree = "<group>"; };
 		5323E6B10EAFCA74003A9687 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = /System/Library/Frameworks/CoreVideo.framework; sourceTree = "<absolute>"; };
 		5323E6B50EAFCA7E003A9687 /* QTKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QTKit.framework; path = /System/Library/Frameworks/QTKit.framework; sourceTree = "<absolute>"; };
@@ -260,6 +261,8 @@
 		FD6AAA9EFB134787B95943BE /* OscMessage.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.cpp; name = OscMessage.cpp; path = ../../../cinder_0.8.5_mac/blocks/OSC/src/OscMessage.cpp; sourceTree = "<group>"; };
 		FE0F5D5A194BC69400C674FC /* grid.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = grid.cpp; path = ../src/grid.cpp; sourceTree = "<group>"; };
 		FE0F5D5B194BC69400C674FC /* grid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = grid.h; path = ../src/grid.h; sourceTree = "<group>"; };
+		FE607F83194CA5910076EE24 /* pf_tempesta_seven.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = pf_tempesta_seven.ttf; sourceTree = "<group>"; };
+		FE607F85194CA6510076EE24 /* QuickTime.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickTime.framework; path = System/Library/Frameworks/QuickTime.framework; sourceTree = SDKROOT; };
 		FFE57229B1144950A7F5672D /* b2MouseJoint.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = b2MouseJoint.h; path = ../../../cinder_0.8.5_mac/blocks/Box2D/src/Box2D/Dynamics/Joints/b2MouseJoint.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -268,6 +271,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FE607F86194CA6510076EE24 /* QuickTime.framework in Frameworks */,
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
 				0091D8F90E81B9330029341E /* OpenGL.framework in Frameworks */,
 				5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */,
@@ -277,7 +281,6 @@
 				00B784B50FF439BC000DE1D7 /* AudioUnit.framework in Frameworks */,
 				00B784B60FF439BC000DE1D7 /* CoreAudio.framework in Frameworks */,
 				A1510641641C47D6886458F8 /* Syphon.framework in Frameworks */,
-				F7420E8F189F42CCB5ECFD8F /* QuickTime.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -382,6 +385,7 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				FE607F83194CA5910076EE24 /* pf_tempesta_seven.ttf */,
 				7E3E9B659AD34D48BC960F3E /* CinderApp.icns */,
 				19B2A74CD810413BB012BA4C /* Info.plist */,
 			);
@@ -391,9 +395,9 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				FE607F85194CA6510076EE24 /* QuickTime.framework */,
 				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
 				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
-				4F3AAD760B5E4FCC8D4C6F4D /* QuickTime.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -777,6 +781,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D0791E3234894AB798F42478 /* CinderApp.icns in Resources */,
+				FE607F84194CA5910076EE24 /* pf_tempesta_seven.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -806,6 +811,7 @@
 				51A5286B8DAA4D3486775D00 /* b2Settings.cpp in Sources */,
 				039B78203DB24C89B3ED8853 /* b2StackAllocator.cpp in Sources */,
 				04CCB16311E7467DA842FBAF /* b2Timer.cpp in Sources */,
+				FE607F82194CA4E50076EE24 /* SimpleGUI.cpp in Sources */,
 				C7652548B0A24D12A72274C1 /* b2Body.cpp in Sources */,
 				B7D82C377A6343C29FEF7F49 /* b2ContactManager.cpp in Sources */,
 				42725A87ED93407D98AAA8AD /* b2Fixture.cpp in Sources */,

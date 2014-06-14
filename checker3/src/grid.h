@@ -13,13 +13,10 @@
 
 #include "cinder/gl/Fbo.h"
 #include "OscListener.h"
-#include "cinder/Timeline.h";
+#include "cinder/Timeline.h"
 
 
 #endif /* defined(__checker__grid__) */
-
-//using namespace cinder;
-//using namespace std;
 
 
 class TileAnimation {

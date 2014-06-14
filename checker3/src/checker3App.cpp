@@ -14,18 +14,18 @@
 #include "SimpleGUI.h"
 
 #include "cinder/qtime/QuickTime.h"
-#include "cinder/gl/Texture.h"
-#include "cinder/Utilities.h"
 
 using namespace ci;
 using namespace ci::app;
 using namespace ph::warping; // warping
-//using namespace mowa::sgui; // gui
+using namespace mowa::sgui; // gui
 using namespace std;
 
 #define CONFIG_FILE "settings.sgui.txt"
 
 class checker3App : public AppNative {
+private:
+    SimpleGUI* gui;
 public:
 	void setup();
 	void update();
@@ -45,7 +45,9 @@ public:
     
 	WarpList mWarps;
 	osc::Listener mOscListener;
-	mowa::sgui::SimpleGUI* gui;
+    
+//    std::string playback;
+    map<string, bool> playback; // easier to control with gui
 	
     Grid* oneGrid;
 	int gridx; // num of gridtiles
@@ -61,9 +63,14 @@ void checker3App::setup() {
     //    gl::enableAlphaBlending();
     //    gl::enableAdditiveBlending();
     //    gl::enableWireframe();
+    
+    playback["grid"] = true;
+    playback["video"] = false;
+    playback["syphon"] = false;
+//    playback = "grid"; // 'grid', 'video', 'syphon', ...
+//    playback = "video";
 	
 	// grid stuff
-    //	oneGrid = new Grid(24, 16);
 	oneGrid = new Grid(24, 36);
     //	oneGrid->setup(getWindowWidth(), getWindowHeight());
 	oneGrid->setup(1280, 800);
@@ -80,7 +87,7 @@ void checker3App::setup() {
 	mOscListener.setup(5000);
 	
 	// gui setup
-	gui = new mowa::sgui::SimpleGUI(this, ci::Font(loadResource("pf_tempesta_seven.ttf"), 8));
+	gui = new SimpleGUI(this, Font(loadResource("pf_tempesta_seven.ttf"), 8));
 	gui->lightColor = ColorA(1, 1, 0, 1);
     //	gui->addLabel("Grid Control");
 	gui->addPanel();
@@ -88,12 +95,20 @@ void checker3App::setup() {
 	gui->addParam("Grid Y", &gridy, 1, 45, 16);
 	gui->addButton("Load state")->registerClick(this, &checker3App::loadState);
 	gui->addButton("Save state")->registerClick(this, &checker3App::saveState);
+    gui->addSeparator();
+    gui->addLabel("Playback");
+    gui->addParam("Grid", &playback["grid"], true, 1);
+    gui->addParam("Video", &playback["video"], false, 1);
+    gui->addParam("Syphon", &playback["syphon"], false, 1);
 	gui->load(CONFIG_FILE);
     
-    
-    mMovie = qtime::MovieGl::create("anna.mov");
-    mMovie->setLoop();
-    mMovie->play();
+    try {
+        mMovie = qtime::MovieGl::create(loadAsset("anna.mov"));
+        mMovie->setLoop();
+        mMovie->play();
+    } catch( ... ) {
+        console() << "Couldn't load move file!" << endl;
+    }
 }
 bool checker3App::loadState(MouseEvent event) {
 	gui->load(CONFIG_FILE);
@@ -136,6 +151,16 @@ void checker3App::update() {
 		if(message.getAddress() == "/grid") {
 			oneGrid->oscMessage(message);
 		}
+        // setting what to play (grid, video, syphon, ...)
+        if(message.getAddress() == "/setOutput" &&
+           message.getArgType(0) == osc::TYPE_STRING) {
+            for (std::map<string,bool>::iterator it=playback.begin(); it!=playback.end(); ++it){
+                playback[it->first] = false;
+            }
+            playback[message.getArgAsString(0)] = true;
+//            playback = message.getArgAsString(0);
+        }
+        // resetting video to 0
         if(message.getAddress() == "/video") {
             mMovie->reset();
         }
@@ -157,9 +182,14 @@ void checker3App::draw() {
 	gl::color(Color::white());
 	for(WarpConstIter itr=mWarps.begin();itr!=mWarps.end();++itr) {
 		WarpRef warp(*itr);
-		ci::gl::Texture tex = oneGrid->mFbo.getTexture();
-        //		warp->draw(tex);
-        warp->draw(mFrameTexture);
+        if(playback["grid"]) {
+            gl::Texture tex = oneGrid->mFbo.getTexture();
+            warp->draw(tex);
+        } else if (playback["video"]) {
+            if(mMovie) {
+                warp->draw(mFrameTexture);
+            }
+        }
 	}
 	
 	gui->draw();
