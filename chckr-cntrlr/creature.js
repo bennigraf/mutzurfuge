@@ -7,7 +7,7 @@ module.exports = Creature;
 function Creature(env) {
 	this.world = env;
 	this.age = 0;
-	this.alive = true;
+	this.alive = false;
 	this.roots = [];
 	this.tiles = [];
 	// render tiles are what's represented to the outside world, inside we deal with tiles
@@ -26,9 +26,81 @@ Creature.prototype.spawn = function() {
 	
 	this.rayProp = 0.0;
 	this.rays = [];
+	
+	this.worldMap = []; // ndx is x.y, contains array of boardids serving this tile
 }
 Creature.prototype.setRootCoords = function(boardid, x, y) {
 	this.roots = [boardid, x, y];
+	this.makeWorldMap();
+	// console.log(this.worldMap);
+	// a world map saves a lot of calculations afterwards by predefining where the creature is 
+	// and which tiles go on which board/grid later...
+	// like: 
+	// worldmap[board][dimensions.xy] where dimensions are the offsets of board relative to 0/0
+	// so when drawing for each tile I only have to look up on which board it belongs instead of calculating it
+	
+	// only alive once initiated
+	this.alive = true;
+}
+Creature.prototype.makeWorldMap = function() {
+	// find out grid the creature is on and it's dimensions
+	// store in this.worldMap
+	// for each transition from that grid on (and their transitions etc.) do the same
+	// should do that recursive again...
+	var tmpWorldMaps = {};
+	var addTransition = function(board, boardoffset, rootCoord) { // args: boardid
+		var g = board;
+		var wm = { xspan: [0, 0], yspan: [0, 0] };
+		wm.xspan[0] = rootCoord[0] * -1 + boardoffset[0];
+		wm.xspan[1] = g.width - rootCoord[0] - 1 + boardoffset[0];
+		wm.yspan[0] = rootCoord[1] * -1 + boardoffset[1];
+		wm.yspan[1] = g.height - rootCoord[1] - 1 + boardoffset[1];
+		tmpWorldMaps[g.id] = wm;
+		for(t in g.transitions) {
+			var trans = g.transitions[t];
+			var newg = this.world.findGridById(trans[1]);
+			var newOffset = [0, 0];
+			// only go on if trans is not set to false and board is not in worldMap yet
+			if(trans[1] && !tmpWorldMaps[trans[1]]) {
+				if(trans[0] == 'top') {
+					newOffset[0] = boardoffset[0];
+					newOffset[1] = boardoffset[1] - newg.height;
+				} else if (trans[0] == 'bottom') {
+					newOffset[0] = boardoffset[0];
+					newOffset[1] = boardoffset[1] + g.height;
+				} else if (trans[0] == 'right') {
+					newOffset[0] = boardoffset[0] + g.width;
+					newOffset[1] = boardoffset[1];
+				} else if (trans[0] == 'left') {
+					newOffset[0] = boardoffset[0] - newg.width;
+					newOffset[1] = boardoffset[1];
+				}
+				addTransition(newg, newOffset, rootCoord);
+			}
+		}
+	}.bind(this);
+	// execute recursive function from above
+	var g = this.world.findGridById(this.roots[0]);
+	addTransition(g, [0, 0], [this.roots[1], this.roots[2]]);
+	
+	// now make super world map with indizes ('x.y') mapped to boardids, whoop whoop
+	for (boardid in tmpWorldMaps) {
+		var twm = tmpWorldMaps[boardid];
+		var xongrid = 0;
+		for(var x = twm.xspan[0]; x <= twm.xspan[1]; x++) {
+			var yongrid = 0;
+			for(var y = twm.yspan[0]; y <= twm.yspan[1]; y++) {
+				if(!this.worldMap[x+'.'+y]) {
+					this.worldMap[x+'.'+y] = [[boardid, xongrid, yongrid]];
+				} else {
+					this.worldMap[x+'.'+y].push([boardid, xongrid, yongrid]);
+				}
+				yongrid += 1;
+			}
+			xongrid += 1;
+		}
+	}
+	
 }
 Creature.prototype.tick = function() {
 	this.age = this.age + 1;
@@ -49,18 +121,21 @@ Creature.prototype.tick = function() {
 	// console.log(nextStep);
 	newTile[0] = parseInt(this.head[0]) + parseInt(steps[nextStep%4][0]);
 	newTile[1] = parseInt(this.head[1]) + parseInt(steps[nextStep%4][1]);
-	// if(!this.world.tileInWorld(this, newTile)) {
-		// newTile = this.head;
-	// }
+	if(!this.worldMap[newTile[0]+"."+newTile[1]]) { // checks if tile is available to creature
+		newTile = this.head;
+	}
 	// console.log(newTile);
 	this.head = newTile;
 	this.setTile(newTile);
 	// console.log(this.head[1] - 10);
 	
-	// console.log(1/100 * this.age);
-	// var mmmc = new Colr({r: 100 * this.age, g: 100, b: 100});
-	// console.log(mmmc);
-	// this.clr = mmmc;
+	// remove very old tiles
+	for(ndx in this.tiles) {
+		if(this.tiles[ndx][1] > 20) {
+			delete this.tiles[ndx];
+		}
+	}
+	
 	
 	// add ray from time to time
 	if(this.rayProp > Math.random()) {
@@ -68,7 +143,7 @@ Creature.prototype.tick = function() {
 		this.rayProp = 0;
 		var ray = {
 			age: 0,
-			vect: [Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 3 + 2], // dir x/y, speed
+			vect: [Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 + 3], // dir x/y, speed
 			tiles: [this.head],
 			dying: false,
 			dead: false
@@ -87,26 +162,22 @@ Creature.prototype.tick = function() {
 			newTile[0] = lastTile[0] + Math.round(1 * ray.vect[0] * ray.vect[2]);
 			newTile[1] = lastTile[1] + Math.round(1 * ray.vect[1] * ray.vect[2]);
 			// console.log(newTile);
-			if(this.world.tileInWorld(this, newTile)) {
+			if(this.worldMap[newTile[0]+"."+newTile[1]]) {
 				this.rays[i].tiles.push(newTile);
 			} else {
 				this.rays[i].dying = true;
+				this.rays[i].diedAt = ray.age;
 			}
 		} else {
 			// it's dying!!!!
-			if(!ray.diedAt) {
-				this.rays[i].diedAt = ray.age;
-			} else {
-				if(ray.age - ray.diedAt > 20) {
-					removableRays.push(i);
-				}
+			if(ray.age - ray.diedAt > 20) {
+				removableRays.push(i);
 			}
 		}
 		ray.age += 1;
 	}
 	// remove old rays
 	for(var i = 0; i < removableRays.length; i++) {
-		console.log("remove ray");
 		this.rays.splice(removableRays[i], 1);
 	}
 	
@@ -122,21 +193,22 @@ Creature.prototype.tick = function() {
 	
 	for(i in this.rays) {
 		var r = this.rays[i];
-		var mod = 0;
+		var mod = 0.75;
 		if(r.dying) {
-			mod = 1/30 * (r.age - r.diedAt);
+			mod = mod + 1/80 * (r.age - r.diedAt);
 		}
 		for (var j = 0; j < r.tiles.length; j++) {
 			var t = r.tiles[j];
 			if(!this.renderTiles[t[0]+"."+t[1]]) {
 				var co = this.clr.toHsv();
-				co.s = co.s + Math.random() * -0.1; // modulate saturation
+				co.s = co.s + Math.random() * -0.3; // modulate saturation
+				co.s = co.s * (1-mod);
 				var c = new Colr(co);
-				c = Colr.lighten(c, mod * 10);
 				this.renderTiles[t[0]+"."+t[1]] = c;
 			}
 		}
 	}
+	
 };
 Creature.prototype.setTile = function(tile) {
 	var path = tile[0]+"."+tile[1];

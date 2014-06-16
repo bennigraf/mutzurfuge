@@ -18,16 +18,16 @@ wrld.addGrid({
 	id: 732,
 	size: [43, 17],
 	pos: [0, 0],
-	address: ["10.0.0.1", 5000],
-	gravity: 'top',
+	address: ["127.0.0.1", 6001],
+	gravity: 'up',
 	transitions: [['top', 213]]
 });
 wrld.addGrid({
 	id: 213,
-	size: [43, 40],
-	// size: [26, 20],
+	// size: [43, 40],
+	size: [43, 27],
 	pos: [0, 0],
-	address: ["127.0.0.1", 5000],
+	address: ["127.0.0.1", 5102],
 	gravity: 'none',
 	transitions: [['top', 142], ['bottom', 732]]
 });
@@ -36,9 +36,9 @@ wrld.addGrid({
 	id: 142,
 	size: [43, 17],
 	pos: [0, 0],
-	address: ["10.0.0.3", 5000],
+	address: ["127.0.0.1", 6002],
 	gravity: 'down',
-	transitions: [['bottom', 732]]
+	transitions: [['bottom', 213]]
 });
 
 // runs the world! How epic!

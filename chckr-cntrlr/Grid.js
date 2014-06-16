@@ -1,4 +1,5 @@
 var osc = require('node-osc');
+var dgram = require('dgram'); // udb socket to send stuff, should be way faster than osc
 var twn = require('shifty');
 
 var Colr = require("tinycolor2");
@@ -18,7 +19,7 @@ function Grid(id, w, h, offsetx, offsety) {
 	this.offsety = offsety;
 	
 	this.tiles = [];
-	this.setupTiles();
+	this.clearTiles();
 	
 	this.marker = this.makeMarkerFromId();
 	
@@ -35,7 +36,8 @@ function Grid(id, w, h, offsetx, offsety) {
 	//       duration: 1000
 	//     });
 }
-Grid.prototype.setupTiles = function() {
+Grid.prototype.clearTiles = function() {
+	this.tiles = [];
 	for (var x = 0; x < this.width; x++) {
 		this.tiles[x] = [];
 		for (var y = 0; y < this.height; y++) {
@@ -69,6 +71,9 @@ Grid.prototype.makeMarkerFromId = function() {
 }
 Grid.prototype.setAddress = function(addr, port) {
 	this.oscSndr = new osc.Client(addr, port);
+	this.udpSndr = dgram.createSocket('udp4');
+	this._address = addr;
+	this._port = port;
 }
 Grid.prototype.setGravity = function(g) {
 	this.gravity = g; // 'up', 'down', 'left', 'right'
@@ -138,28 +143,52 @@ Grid.prototype.sendData = function() {
 	// this.oscSndr.send('/grid', 'clear');
 	
 	// buffer all values first
-	var values = [];
+	var values = new Buffer(this.width * this.height * 3); // 8 bytes for commands?
 	for (var y = 0; y < this.height; y++) {
 		for (var x = 0; x < this.width; x++) {
 			var tc = this.tiles[x][y];
-			if(this.oscSndr) {
-				var rgb = tc.toRgb();
-				values.push(rgb.r/255+ln);// ln makes sure floats are being sent
-				values.push(rgb.g/255+ln);
-				values.push(rgb.b/255+ln);
-			}
+			var rgb = tc.toRgb();
+			// values.push(rgb.r/255+ln);// ln makes sure floats are being sent
+			// values.push(rgb.g/255+ln);
+			// values.push(rgb.b/255+ln);
+			// values[y * this.height + x] = rgb.r;
+			// values[y * this.height + x + 1] = rgb.g;
+			// values[y * this.height + x + 2] = rgb.b;
+			// values.writeUInt8(rgb.r, y * this.height + x);
+			// values.writeUInt8(rgb.g, y * this.height + x + 1);
+			// values.writeUInt8(rgb.b, y * this.height + x + 2);
+			// TODO: This write wrong values (or at wrong indizes)
+			var ndx = (y * this.width + x) * 3;
+			values.writeUInt8(Math.round(rgb.r), ndx);
+			values.writeUInt8(Math.round(rgb.g), ndx + 1);
+			values.writeUInt8(Math.round(rgb.b), ndx + 2);
 		}
 	}
-	// send in steps because osc has a limit in msg size (or udp?)
-	for(var n = 0; n < this.height * this.width; n += 80) { // setting 80 tiles -> 240 color values, seems to be the max
-		var msg = new osc.Message('/grid');
-		msg.append("setMany"); // we're setting many tiles at once here...
-		msg.append(n); // offset
-		for(var i = 0; i < 240 && n*3+i < values.length; i++) {
-			msg.append(values[n*3 + i]);
+	// console.log(values);
+	
+	// send over udp in steps that represent the mtu (check the value!!!)
+	var mtu = 16384;
+	// console.log("///////////");
+	// console.log(values.length);
+	for (var n = 0; n < values.length; n = n + mtu - 8) { // 8 bytes as command sequence
+		var dsize = mtu - 8;
+		if(n + dsize > values.length) {
+			dsize = values.length - n;
 		}
-		this.oscSndr.send(msg);
+		var buf = new Buffer(dsize + 8);
+		buf.write("grid", 0, 4, 'utf8');
+		// write offset to bytes 5 to 8
+		buf.writeUInt32BE(n, 4);
+		// console.log(buf[4], buf[5], buf[6], buf[7])
+		values.copy(buf, 8, n, n + dsize);
+		
+		// console.log("sending", buf.length, this._port, this._address);
+		// console.log(buf);
+		this.udpSndr.send(buf, 0, buf.length, this._port, this._address);
 	}
+	
+	// clear tiles before next run
+	this.clearTiles();
 }
 /*
 Grid.prototype.setTile = function(x, y, r, g, b) {

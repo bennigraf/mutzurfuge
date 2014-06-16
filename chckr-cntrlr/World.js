@@ -9,9 +9,9 @@ function World() {
 	this.oscServer = null;
 	this.tcpServer = null;
 	this.creatures = new Array();
-	this.tiles = new Array();
-	this.clearTiles();
 	this.grids = new Array();
+	
+	this._gridsById;
 }
 World.prototype.addGrid = function(gridobj) {
 	var g = new Grid(gridobj.id, gridobj.size[0], gridobj.size[1], gridobj.pos[0], gridobj.pos[1]);
@@ -25,6 +25,13 @@ World.prototype.addGrid = function(gridobj) {
 		}
 	}
 	this.grids.push(g);
+	this._updateGridMeta();
+}
+World.prototype._updateGridMeta = function() {
+	this._gridsById = [];
+	for (var i = 0; i < this.grids.length; i++) {
+		this._gridsById[this.grids[i].id] = this.grids[i];
+	}
 }
 World.prototype.setOscServer = function(port, host) {
 	this.oscServer = new osc.Server(port, host);
@@ -78,20 +85,6 @@ World.prototype.spawnCreature = function(boardid, x, y) {
 		console.log("couldn't find point for creature");
 	}
 }
-World.prototype.clearTiles = function() {
-	this.tiles = new Array();
-	for (var i=0; i < this.width; i++) {
-		this.tiles[i] = new Array();
-		for (var j=0; j < this.height; j++) {
-			this.tiles[i][j] = {
-				settled: false,
-				age: 0,
-				x: i,
-				y: j
-			}
-		};
-	};
-}
 World.prototype.setTile = function(x, y, r, g, b) {
 	var ln = 0.000000001;
 	for (var i=0; i < this.grids.length; i++) {
@@ -101,8 +94,10 @@ World.prototype.setTile = function(x, y, r, g, b) {
 	};
 }
 World.prototype.tick = function() {
+	var time = process.hrtime();
+	time = time[0]+time[1]/1000000000;
 	// update creatures, remove dead ones
-	console.log("tick");
+	// console.log("tick");
 	var toDie = new Array();
 	for (var i = 0; i < this.creatures.length; i++) {
 		this.creatures[i].tick();
@@ -122,28 +117,32 @@ World.prototype.tick = function() {
 		}
 	}
 	
+	var time2 = process.hrtime();
+	time2 = time2[0]+time2[1]/1000000000;
+	// console.log(time2 - time);
+	
 	// "draw" stuff - get renderTiles from each creature, write it into tiles of grids, tell grids to send data
-	this.clearTiles();
 	for(i in this.creatures) {
-		rts = this.creatures[i].renderTiles;
-		for(ndx in rts) {
-			// ndx i "x.y", relative to creature.root
-			// for each tile: 
-			// 1. check on which board it is
-			// 2. set tile of board
-			var pos = ndx.split(".");
-			var absPos = [0, 0];
-			absPos[0] = this.creatures[i].roots[1] + parseInt(pos[0]);
-			absPos[1] = this.creatures[i].roots[2] + parseInt(pos[1]);
-			// console.log(absPos);
-			// console.log((rts[ndx]));
-			this.setTileOnGrid(this.creatures[i].roots[0], absPos, rts[ndx]);
+		if(this.creatures[i].alive) {
+			rts = this.creatures[i].renderTiles;
+			for(ndx in rts) {
+				var wmtile = this.creatures[i].worldMap[ndx][0]; // assuming only one grid per tile for now
+				var g = this.findGridById(wmtile[0]);
+				g.setTile([wmtile[1], wmtile[2]], rts[ndx]);
+			}
 		}
 	}
+	var time2 = process.hrtime();
+	time2 = time2[0]+time2[1]/1000000000;
+	// console.log(time2 - time);
 	
 	for (var i = 0; i < this.grids.length; i++) {
 		this.grids[i].sendData();
 	}
+	
+	var time2 = process.hrtime();
+	time2 = time2[0]+time2[1]/1000000000;
+	// console.log(time2 - time);
 	
 	// console.log(this.grids[0].tiles[0][0]);
 }
@@ -240,10 +239,8 @@ World.prototype.gridTransition = function(boardid, tilecoords) {
  * return board with certain id
  */
 World.prototype.findGridById = function(id) {
-	for (i in this.grids) {
-		if(this.grids[i].id == id) {
-			return this.grids[i];
-		}
+	if(this._gridsById[id]) {
+		return this._gridsById[id];
 	}
 	return false;
 }
@@ -267,7 +264,7 @@ World.prototype.run = function() {
 	
 	this.interval = setInterval(function() {
 		this.tick();
-	}.bind(this), 68);
+	}.bind(this), 50);
 	
 }
 // World.prototype.stop = function() {
