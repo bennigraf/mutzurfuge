@@ -15,6 +15,9 @@
 
 #include "cinder/qtime/QuickTime.h"
 
+// udp server instead of osc
+#include "UdpServer.h"
+
 using namespace ci;
 using namespace ci::app;
 using namespace ph::warping; // warping
@@ -45,6 +48,9 @@ public:
     
 	WarpList mWarps;
 	osc::Listener mOscListener;
+    int oscListenerPort;    // both are used for setting new ports
+    int oscListenerNewPort;
+    bool oscListenerRunning;
     
 //    std::string playback;
     map<string, bool> playback; // easier to control with gui
@@ -55,6 +61,18 @@ public:
     
     qtime::MovieGlRef		mMovie;
     gl::Texture				mFrameTexture, mInfoTexture;
+    
+    
+    // udp server stuff
+    void						accept();
+	UdpServerRef				mServer;
+	UdpSessionRef				mSession;
+	int                         udpMtu;
+	void						onAccept( UdpSessionRef session );
+	void						onError( std::string err, size_t bytesTransferred );
+	void						onRead( ci::Buffer buffer );
+	void						onReadComplete();
+    
 };
 
 void checker3App::setup() {
@@ -84,7 +102,31 @@ void checker3App::setup() {
 	}
 	
 	// osc... duh
-	mOscListener.setup(5000);
+    oscListenerRunning = false;
+    oscListenerPort = 5000;
+    oscListenerNewPort = oscListenerPort;
+    while (!oscListenerRunning && oscListenerPort <= 5010) {
+        console() << "trying to setup osc listener on port " << oscListenerPort << endl;
+        try {
+            mOscListener.setup(oscListenerPort);
+            oscListenerNewPort = oscListenerPort;
+            oscListenerRunning = true;
+        } catch (...) {
+            console() << "couldn't setup osc listener on port " << oscListenerPort << endl;
+            oscListenerPort += 1;
+        }
+    }
+    
+    udpMtu = 16000;
+    // udp server, see examples in https://github.com/BanTheRewind/Cinder-Asio
+    mServer = UdpServer::create( io_service() );
+	// Add callbacks to work with the server asynchronously.
+	mServer->connectAcceptEventHandler( &checker3App::onAccept, this );
+	mServer->connectErrorEventHandler( &checker3App::onError, this );
+	
+	// Start listening.
+	accept();
+    
 	
 	// gui setup
 	gui = new SimpleGUI(this, Font(loadResource("pf_tempesta_seven.ttf"), 8));
@@ -93,6 +135,7 @@ void checker3App::setup() {
 	gui->addPanel();
 	gui->addParam("Grid X", &gridx, 1, 45, 24);
 	gui->addParam("Grid Y", &gridy, 1, 45, 16);
+	gui->addParam("OSC Port", &oscListenerNewPort, 5000, 5010, oscListenerPort);
 	gui->addButton("Load state")->registerClick(this, &checker3App::loadState);
 	gui->addButton("Save state")->registerClick(this, &checker3App::saveState);
     gui->addSeparator();
@@ -128,6 +171,13 @@ bool checker3App::saveState(MouseEvent event) {
 
 void checker3App::update() {
 	oneGrid->update();
+    
+    // set new osc listener if port has changed
+    if(oscListenerNewPort != oscListenerPort) {
+        mOscListener.setup(oscListenerNewPort);
+        oscListenerPort = oscListenerNewPort;
+        accept();
+    }
 	
 	if(gridx != oneGrid->dimensions.x || gridy != oneGrid->dimensions.y) {
 		oneGrid->updateDimensions(gridx, gridy);
@@ -136,9 +186,9 @@ void checker3App::update() {
 	while(mOscListener.hasWaitingMessages()) {
 		osc::Message message;
 		mOscListener.getNextMessage( &message );
-        //		console() << "New message received" << std::endl;
-        //		console() << "Address: " << message.getAddress() << std::endl;
-        //		console() << "Num Arg: " << message.getNumArgs() << std::endl;
+//        		console() << "New message received" << std::endl;
+//        		console() << "Address: " << message.getAddress() << std::endl;
+//        		console() << "Num Arg: " << message.getNumArgs() << std::endl;
 		for	(int i = 0; i < message.getNumArgs(); i++ ) {
             //			console() << "arg " << i << ": ";
             //			console() << message.getArgTypeName(i) << " - ";
@@ -153,6 +203,7 @@ void checker3App::update() {
 		}
         // setting what to play (grid, video, syphon, ...)
         if(message.getAddress() == "/setOutput" &&
+           message.getNumArgs() == 1 &&
            message.getArgType(0) == osc::TYPE_STRING) {
             for (std::map<string,bool>::iterator it=playback.begin(); it!=playback.end(); ++it){
                 playback[it->first] = false;
@@ -162,11 +213,12 @@ void checker3App::update() {
         }
         // resetting video to 0
         if(message.getAddress() == "/video") {
-            mMovie->reset();
+            mMovie->seekToStart();
         }
 	}
     
-    if( mMovie )
+    // update video file    
+    if(playback["video"] && mMovie)
 		mFrameTexture = mMovie->getTexture();
 }
 
@@ -177,7 +229,7 @@ void checker3App::draw() {
     //    gl::clear(Color::white());
 	
 	// draws to fbo only
-	oneGrid->draw();
+	oneGrid->draw(Warp::isEditModeEnabled());
 	
 	gl::color(Color::white());
 	for(WarpConstIter itr=mWarps.begin();itr!=mWarps.end();++itr) {
@@ -274,6 +326,70 @@ void checker3App::resize() {
     Warp::handleResize(mWarps);
 	
 }
+
+
+
+/////// udp stuff, stolen from cinder-asio sample "udpserver"
+void checker3App::accept() {
+	if ( mSession ) {
+		mSession.reset();
+	}
+	if ( mServer ) {
+		// This is how you start listening for a connection. Once
+		// a connection occurs, a session will be created and passed
+		// in through the onAccept method.
+		mServer->accept((uint16_t)oscListenerPort+100);
+		console() <<  "Listening on port: " << oscListenerPort + 1 << endl;
+	}
+}
+void checker3App::onAccept( UdpSessionRef session ) {
+	// Get the session from the argument and set callbacks.
+	mSession = session;
+	mSession->connectErrorEventHandler( &checker3App::onError, this );
+	mSession->connectReadCompleteEventHandler( &checker3App::onReadComplete, this );
+	mSession->connectReadEventHandler( &checker3App::onRead, this );
+    
+	// Start reading data from the client.
+	mSession->read(udpMtu);
+}
+void checker3App::onRead( ci::Buffer buffer ) {
+//	console() << buffer.getDataSize() << " bytes read" << endl;
+    
+	// Data is packaged as a ci::Buffer. This allows
+	// you to send any kind of data. Because it's more common to
+	// work with strings, the session object has static convenience
+	// methods for converting between std::string and ci::Buffer.
+	
+//	console() << buffer.getDataSize() << endl;
+//    int *pInt = static_cast<int*>(buffer.getData()); // cast from void* to int*
+    
+//    uint8_t* buf = reinterpret_cast<uint8_t*>(buffer.getData());
+    if(buffer.getDataSize() > 8) {
+        string response	= UdpSession::bufferToString(buffer);
+        response = response.substr(0, 4);
+        if(response == "grid") {
+            oneGrid->byteMessage(buffer);
+        }
+    }
+    
+	// Continue reading.
+	mSession->read(udpMtu);
+}
+
+void checker3App::onReadComplete() {
+//	console() << "Read complete" << endl;
+    
+	// Continue reading new responses.
+	mSession->read(udpMtu);
+}
+void checker3App::onError( string err, size_t bytesTransferred ) {
+	string text = "Error";
+	if ( !err.empty() ) {
+		text += ": " + err;
+	}
+    console() << text << endl;
+}
+
 
 
 

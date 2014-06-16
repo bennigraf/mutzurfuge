@@ -44,9 +44,11 @@ public:
     void setup(int, int);
     void update();
     void updateDimensions(int x, int y);
-    void draw();
+    void draw(bool editMode);
     void drawBasicGrid();
+    void drawBasicGrid(int spacing);
     void oscMessage(cinder::osc::Message);
+    void byteMessage(cinder::Buffer);
     
     void setTiles();
     void setNodes();

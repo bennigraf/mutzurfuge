@@ -82,15 +82,13 @@ void Grid::oscMessage(osc::Message msg) {
         if(tileColors.size() > y*dimensions.x+x) {
             tileColors[y * dimensions.x + x] = ColorAf(r, g, b, 1);
         }
-        //        console() << "setting stuff " << ColorAf(r, g, b, 1) << endl;
     }
     // ========= message to clear grid
     if(msg.getArgType(0) == osc::TYPE_STRING &&
        msg.getArgAsString(0) == "clear") {
         for (int i = 0; i < tileColors.size(); i++) {
-            tileColors[i] = ColorAf(1, 1, 0, 1);
+            tileColors[i] = ColorAf(1, 1, 1, 1);
         }
-        //        console() << "clear" << endl;
     }
     
     // ========= message to set many
@@ -98,24 +96,18 @@ void Grid::oscMessage(osc::Message msg) {
        msg.getArgAsString(0) == "setMany" &&
        msg.getArgType(1) == osc::TYPE_INT32) {
         int offset = msg.getArgAsInt32(1);
-        //        for (int i = 0; i < tileColors.size(); i++) {
-        //            int ndx = 2 + i * 3;
-        //            console() << ndx << " " << msg.getNumArgs() << endl;
-        //            if() {
-        //                float r = msg.getArgAsFloat(ndx + 0);
-        //                float g = msg.getArgAsFloat(ndx + 1);
-        //                float b = msg.getArgAsFloat(ndx + 2);
-        //                tileColors[i] = ColorAf(r, g, b, 1);
-        //            }
-        //        }
-        for (int i = 2; i < msg.getNumArgs(); i++) {
+        // clear tiles if new frame is being set
+        for (int i = 2; i < msg.getNumArgs() - 3; i++) {
             int clrNdx = offset + i / 3;
             if (tileColors.size() >= clrNdx) {
-                float r = msg.getArgAsFloat(i++);
-                float g = msg.getArgAsFloat(i++);
-                float b = msg.getArgAsFloat(i);
-                tileColors[clrNdx] = ColorAf(r, g, b, 1);
-                //                console() << r << " " << g << " " << b << endl;
+                try {
+                    float r = msg.getArgAsFloat(i++);
+                    float g = msg.getArgAsFloat(i++);
+                    float b = msg.getArgAsFloat(i);
+                    tileColors[clrNdx] = ColorAf(r, g, b, 1);
+                } catch ( ... ) {
+//                    console() << "wrong type" << endl;
+                }
             }
         }
     }
@@ -129,7 +121,6 @@ void Grid::oscMessage(osc::Message msg) {
        msg.getArgType(1) == osc::TYPE_INT32 &&
        msg.getArgType(2) == osc::TYPE_INT32 &&
        msg.getArgType(3) == osc::TYPE_STRING) {
-        //        console() << "folding something... " << msg.getArgAsString(0);
         string type = msg.getArgAsString(0);
         int tPosX = msg.getArgAsInt32(1);
         int tPosY = msg.getArgAsInt32(2);
@@ -147,6 +138,27 @@ void Grid::oscMessage(osc::Message msg) {
         }
     }
 }
+void Grid::byteMessage(cinder::Buffer buf) {
+    uint8_t* data = reinterpret_cast<uint8_t*>(buf.getData());
+    int offset = (data[4] << 24) + (data[5] << 16) + (data[6] << 8) + data[7];
+    // clear tiles if new frame is being set
+    for (int i = 8; i < buf.getDataSize(); i++) {
+        int clrNdx = offset + i / 3;
+        if (tileColors.size() > clrNdx) {
+            try {
+                float r = (int)data[i++] / 255.f;
+                float g = (int)data[i++] / 255.f;
+                float b = (int)data[i] / 255.f;
+                tileColors[clrNdx] = ColorAf(r, g, b, 1);
+            } catch ( ... ) {
+                console() << "wrong type" << endl;
+            }
+        }
+    }
+
+}
+
+
 vector<Vec3f> Grid::getTileNodes(int posx, int posy) {
     int ndxTL = posy * (dimensions.x + 1) + posx;
     int ndxTR = ndxTL + 1;
@@ -182,6 +194,9 @@ void Grid::setTileColorNeighbour(int x, int y, ColorAf col, string nb) {
 }
 
 void Grid::drawBasicGrid() {
+    drawBasicGrid(0);
+}
+void Grid::drawBasicGrid(int spacing) {
     int pxlWidth = mFbo.getWidth();
     int pxlHeight = mFbo.getHeight();
     
@@ -193,16 +208,15 @@ void Grid::drawBasicGrid() {
         for(int w = 0; w < dimensions.x; w++) {
             int ndx = h * (dimensions.x+1) + w; // +1 because the rightmost nodes are also included
             Vec3f node = nodes[ndx];
-            float xpos = node.x * pxlWidth;
-            float ypos = node.y * pxlHeight;
-            //            float xsize = pxlWidth/(float)dimensions.x - 1;
-            //            float ysize = pxlHeight/(float)dimensions.y - 1;
-            float xsize = pxlWidth/(float)dimensions.x;
-            float ysize = pxlHeight/(float)dimensions.y;
+            float xpos = node.x * pxlWidth + (float)spacing/2.f;
+            float ypos = node.y * pxlHeight + (float)spacing/2.f;
+            float xsize = pxlWidth/(float)dimensions.x - (float)spacing/2.f;
+            float ysize = pxlHeight/(float)dimensions.y - (float)spacing/2.f;
             
             //            gl::color(Colorf(1.f/(float)dimensions.y * (float)h, 1.f, 1.f));
             //            console() << tileColors[h * dimensions.x + w] << endl;
-            //            gl::color(ColorAf(1, 0, 1, 1));
+//            gl::color(ColorAf(1, 0, 1, 1));
+//            console()<<tileColors[h * dimensions.x + w]<<endl;
             gl::color(tileColors[h * dimensions.x + w]);
             gl::drawSolidRect(Rectf(xpos, ypos, xpos + xsize, ypos + ysize));
             //            console() << "drawing" <<endl;
@@ -213,7 +227,7 @@ void Grid::drawBasicGrid() {
 }
 
 // drawing pipeline, handles animations as well
-void Grid::draw() {
+void Grid::draw(bool editMode) {
     mFbo.bindFramebuffer();
     // this is done to set the right viewport
     Area viewport = gl::getViewport();
@@ -221,9 +235,13 @@ void Grid::draw() {
     
     gl::pushMatrices();
     gl::setMatricesWindowPersp(mFbo.getSize() );
-    gl::clear(Colorf(1, 1, 1));
-    
-    drawBasicGrid();
+    if (editMode) {
+        gl::clear(Colorf(0,0,0));
+        drawBasicGrid(3);
+    } else {
+        gl::clear(Colorf(1, 1, 1));
+        drawBasicGrid();
+    }
     
     for (int i = 0; i < tileAnimations.size(); i++) {
         tileAnimations.at(i).draw(mFbo.getWidth(), mFbo.getHeight());
