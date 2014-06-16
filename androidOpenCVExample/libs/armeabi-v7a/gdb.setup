@@ -1,0 +1,6 @@
+set solib-search-path /Users/bennigraf/Documents/Hacking/android/of_v0.8.1_android_release/apps/myApps/androidOpenCVExample//obj/local/armeabi-v7a:/Users/bennigraf/Documents/Hacking/android/of_v0.8.1_android_release/apps/myApps/androidOpenCVExample//libs/armeabi-v7a
+directory /Users/bennigraf/Documents/Hacking/android/android-ndk-r9b/platforms/android-17/arch-arm/usr/include
+directory /Users/bennigraf/Documents/Hacking/android/of_v0.8.1_android_release/apps/myApps/androidOpenCVExample//src
+directory /Users/bennigraf/Documents/Hacking/android/android-ndk-r9b/sources/cxx-stl/system
+directory /Users/bennigraf/Documents/Hacking/android/of_v0.8.1_android_release/apps/myApps/androidOpenCVExample//libs/armeabi-v7a
+

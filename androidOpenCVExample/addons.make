@@ -1,0 +1,8 @@
+ofxAndroid
+ofxAccelerometer
+ofxOpenCv
+ofxCv
+ofxAruco
+ofxOsc
+ofxJSON
+ofxNetwork
