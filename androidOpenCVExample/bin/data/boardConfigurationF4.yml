@@ -1,0 +1,6 @@
+%YAML:1.0
+aruco_bc_nmarkers: 1
+aruco_bc_mInfoType: 1 # 0 is pxls, 1 is mtrs
+aruco_bc_markers:
+   - { id:528, corners:[ [ -1.5,  -0.8500, 0. ], [-0.8000, -0.8500, 0. ], [-0.8000, -0.1500, 0. ], [-1.5000, -0.1500, 0.] ] }
+# see boardconfCalc.numbers
