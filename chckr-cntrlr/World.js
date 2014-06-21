@@ -52,12 +52,35 @@ World.prototype.setOscServer = function(port, host) {
 	}.bind(this));
 }
 World.prototype.setTcpServer = function(port, host) {
+	var client = new net.Socket();
+	
 	var server = net.createServer();
 	server.listen(port, host);
 	// console.log('Server listening on ' + server.address().address +':'+ server.address().port);
+	var masock = null;
+	
 	server.on('connection', function(sock) {
 	    console.log('CONNECTED: ' + sock.remoteAddress +':'+ sock.remotePort);
+		if(sock.remoteAddress == "10.0.0.2") {
+			masock = sock;
+		}
+		/*
+		client.connect(12333, '10.0.0.2', function() {
+			console.log('Sending');
+			client.write(data);
+			client.end();
+			console.log("closed Client");
+		});
+		*/
+		sock.on('error', function(e) {
+			console.log(e);
+		});
+		
 		sock.on('data', function(data) {
+			if(masock) {
+				console.log("sending");
+				masock.write(data);
+			}
 			try {
 				data = data.toString(); // convert from buffer to string
 				data = data.replace(/\[\/TCP\]/g, "");
@@ -71,8 +94,8 @@ World.prototype.setTcpServer = function(port, host) {
 			if(data) {
 				this.spawnCreature(data.id, data.x, data.y);
 			}
-		});
-	});
+		}.bind(this));
+	}.bind(this));
 }
 World.prototype.spawnCreature = function(boardid, x, y) {
 	var c = new Creature(this);
