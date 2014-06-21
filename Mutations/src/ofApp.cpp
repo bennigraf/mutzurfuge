@@ -28,22 +28,38 @@ void ofApp::setup(){
 	ofSetLogLevel(OF_LOG_NOTICE);
 	ofSetOrientation(OF_ORIENTATION_90_LEFT);
 
+	noconnectionImg.loadImage("noconnection-error.png");
+	noboardfoundImg.loadImage("nosurface-warning.png");
+
 	if(!grabber.isInitialized()) {
 		grabber.initGrabber(640, 480);
 	}
-	one_second_time = ofGetSystemTime();
-	camera_fps = 0;
-	frames_one_sec = 0;
+
+	// calculate draw size to avoid scaling video content to strange ratios
+	// (video will be drawn at maximum size fitting in the screen with bars usually left and right)
+	// scale height to resolution-height and check if videowidth is smaller that resolution width
+	// if not, do the same for width, that should work then
+	float fact = ofGetHeight() / (float)grabber.getHeight();
+	drawSize.x = grabber.getWidth() * fact;
+	drawSize.y = grabber.getHeight() * fact;
+	if(drawSize.x > ofGetWidth()) {
+		float fact = ofGetWidth() / (float)grabber.getWidth();
+		drawSize.y = ofGetHeight() * fact;
+		drawSize.x = ofGetWidth() * fact;
+	}
+	drawOffset.x = (ofGetWidth() - drawSize.x) / 2.f;
+	drawOffset.y = (ofGetHeight() - drawSize.y) / 2.f;
+
+	// connect time for tcp connection
+	connectTime = ofGetElapsedTimeMillis();
 
 	lastAutofocus = 0.f;
     debugMsgStr = " ";
 
-    oscSender.setup("10.0.1.3", 12332);
-
-    testImage.loadImage(ofToDataPath("testimgs/view2-2marker.jpg"));
+//    oscSender.setup("10.0.1.3", 12332);
 
 	//aruco.setThreaded(false);
-	aruco.setup("intrinsics.int", ofGetWidth(), ofGetHeight(), "");
+	aruco.setup("intrinsics.int", grabber.getWidth(), grabber.getHeight(), "");
 
     // set planes, size must fit actual planes, should put that somewhere else...
     ProjectionSurface psurf0(691, "boardConfigurationF0.yml", ofVec2f(4.3, 1.7));
@@ -78,12 +94,14 @@ void ofApp::setup(){
 	showBoardImage = false;
 
 	setupDrawStuff();
+
+	// android!!
+	ofxAndroidLockScreenSleep();
 }
 void ofApp::setupDrawStuff() {
 	// bgraf setup stuff
 	ofSetFrameRate(30);
 	ofDisableArbTex();
-	video = &grabber;
 	ofEnableAlphaBlending();
 
 	hitmapFbo.allocate(grabber.getWidth(), grabber.getHeight(), GL_RGBA);
@@ -129,35 +147,29 @@ void ofApp::setupHitmapImages() {
 
 //--------------------------------------------------------------
 void ofApp::update(){
-//	if(!tcpClient.isConnected()) {
-//		//if we are not connected lets try and reconnect every 5 seconds
-//		int deltaTime = ofGetElapsedTimeMillis() - connectTime;
-//		if( deltaTime > 1000 ){
-//			tcpClient.setup("10.0.1.3", 12333);
-//			connectTime = ofGetElapsedTimeMillis();
-//		}
-//	}
+	if(!tcpClient.isConnected()) {
+		//if we are not connected lets try and reconnect every 5 seconds
+		long deltaTime = ofGetElapsedTimeMillis() - connectTime;
+		if( deltaTime > 5000 ){
+			ofLog(OF_LOG_WARNING, "trying to connect to tcp");
+			tcpClient.setup("10.0.1.13", 12333);
+			connectTime = ofGetElapsedTimeMillis();
+		}
+	}
 
 	grabber.update();
 	if(grabber.isFrameNew()){
 		// grafi
 		aruco.detectBoards(grabber.getPixelsRef());
-
-		frames_one_sec++;
-		if( ofGetSystemTime() - one_second_time >= 1000){
-			camera_fps = frames_one_sec;
-			frames_one_sec = 0;
-			one_second_time = ofGetSystemTime();
-		}
 	}
 
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-	// draw the marker
-    ofSetColor(ofColor::white);
-	grabber.draw(0, 0, ofGetWidth(), ofGetHeight());
+	float foundBoard = false;
+	ofClear(0);
+    grabber.draw(drawOffset.x, drawOffset.y, drawSize.x, drawSize.y);
 
     // this does the actual boardy stuff
     int hitmapPlaneCounter = 0;
@@ -171,6 +183,7 @@ void ofApp::draw(){
         if (aruco.getBoardProbabilities()[i] > 0.03) {
             // board is in view
             hitmapPlaneToBoard[hitmapPlaneCounter] = i;
+            foundBoard = true;
 
             // draw hitmap
             hitmapFbo.begin();
@@ -204,8 +217,20 @@ void ofApp::draw(){
 //    ofSetColor(ofColor(255, 255, 255, 127));
 //    hitmapFbo.draw(0, ofGetHeight()*2, ofGetWidth(), -ofGetHeight()*2);
 
-    ofSetColor(ofColor(255, 255, 255, 127));
-    visiFbo.draw(0, ofGetHeight()*2, ofGetWidth(), -ofGetHeight()*2);
+    ofSetColor(ofColor(255, 255, 255, 255));
+//    visiFbo.draw(0, ofGetHeight()*2, ofGetWidth(), -ofGetHeight()*2);
+    if(tcpClient.isConnected() && foundBoard) {
+    	visiFbo.draw(drawOffset.x, drawOffset.y + drawSize.y, drawSize.x, drawSize.y * -1);
+    }
+
+    ofSetColor(ofColor(255, 255, 255, 255));
+    if(!tcpClient.isConnected()) {
+    	noconnectionImg.draw(drawOffset.x, drawOffset.y, drawSize.x, drawSize.y);
+    }
+    if(tcpClient.isConnected() && !foundBoard) {
+    	noboardfoundImg.draw(drawOffset.x, drawOffset.y, drawSize.x, drawSize.y);
+    }
+
 
     /*
 	ofSetHexColor(0xF00FF0);
@@ -242,11 +267,16 @@ void ofApp::touchDown(int x, int y, int id){
 	}
     hitmapFbo.readToPixels(hitmapPixels);
     ofLog(OF_LOG_WARNING, "Event!");
+
     // scale clicks to fbo size
-    int fbox = (int)(x / (float)ofGetWidth() * grabber.getWidth());
+//    int fbox = (int)(x / (float)ofGetWidth() * grabber.getWidth());
+	int fbox = (int)((x - drawOffset.x) / (float)drawSize.x * grabber.getWidth());
+
     // fbo is being stored upside down...
     // there's also this weird scaling thing, I need to draw the fbo twice the size...?
-    int fboy = grabber.getHeight() - (int)(y / 2.f / (float)ofGetHeight() * grabber.getHeight());
+//    int fboy = grabber.getHeight() - (int)(y / 2.f / (float)ofGetHeight() * grabber.getHeight());
+	int fboy = grabber.getHeight() - (int)((y - drawOffset.y) / (float)drawSize.y * grabber.getHeight());
+
     ofColor c = hitmapPixels.getColor(fbox, fboy);
     ofVec2f pc(0.f, 0.f);
     bool foundPlane = false;
@@ -330,13 +360,15 @@ void ofApp::swipe(ofxAndroidSwipeDir swipeDir, int id){
 
 //--------------------------------------------------------------
 void ofApp::pause(){
-	// this is a hack to avoid pause stated (which confuses everything on resume)
+	ofxAndroidUnlockScreenSleep();
+	// this is a hack to avoid paused state (which confuses everything on resume, most notably gl and it's textures)
 	std::exit(0);
 }
 
 //--------------------------------------------------------------
 void ofApp::stop(){
-	// this is a hack to avoid pause stated (which confuses everything on resume)
+	ofxAndroidUnlockScreenSleep();
+	// this is a hack to avoid paused state (which confuses everything on resume, most notably gl and it's textures)
 	std::exit(0);
 }
 

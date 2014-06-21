@@ -43,10 +43,6 @@ class ofApp : public ofxAndroidApp{
 		void okPressed();
 		void cancelPressed();
 
-		int one_second_time;
-		int camera_fps;
-		int frames_one_sec;
-
 		////// new stuff from bgraf
 	    ofVideoGrabber grabber;
 	    ofVideoPlayer player;
@@ -54,9 +50,11 @@ class ofApp : public ofxAndroidApp{
 		ofxTCPClient tcpClient;
 		int connectTime;
 
-	    ofImage testImage;
+		ofImage noconnectionImg;
+		ofImage noboardfoundImg;
 
-	    ofBaseVideoDraws * video;
+		ofVec2f drawSize;
+		ofVec2f drawOffset;
 
 	    ofxAruco aruco;
 	    bool useVideo;
