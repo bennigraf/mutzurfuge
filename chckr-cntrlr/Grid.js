@@ -148,47 +148,34 @@ Grid.prototype.sendData = function() {
 		for (var x = 0; x < this.width; x++) {
 			var tc = this.tiles[x][y];
 			var rgb = tc.toRgb();
-			// values.push(rgb.r/255+ln);// ln makes sure floats are being sent
-			// values.push(rgb.g/255+ln);
-			// values.push(rgb.b/255+ln);
-			// values[y * this.height + x] = rgb.r;
-			// values[y * this.height + x + 1] = rgb.g;
-			// values[y * this.height + x + 2] = rgb.b;
-			// values.writeUInt8(rgb.r, y * this.height + x);
-			// values.writeUInt8(rgb.g, y * this.height + x + 1);
-			// values.writeUInt8(rgb.b, y * this.height + x + 2);
-			// TODO: This write wrong values (or at wrong indizes)
 			var ndx = (y * this.width + x) * 3;
 			values.writeUInt8(Math.round(rgb.r), ndx);
 			values.writeUInt8(Math.round(rgb.g), ndx + 1);
 			values.writeUInt8(Math.round(rgb.b), ndx + 2);
 		}
 	}
-	// console.log(values);
 	
 	// send over udp in steps that represent the mtu (check the value!!!)
-	var mtu = 16384;
-	// console.log("///////////");
-	// console.log(values.length);
+	var mtu = 1496; // mtu - 8 needs to be dividable by 3
 	for (var n = 0; n < values.length; n = n + mtu - 8) { // 8 bytes as command sequence
+		// console.log(n);
 		var dsize = mtu - 8;
 		if(n + dsize > values.length) {
 			dsize = values.length - n;
 		}
 		var buf = new Buffer(dsize + 8);
+		// buf.fill(0);
 		buf.write("grid", 0, 4, 'utf8');
 		// write offset to bytes 5 to 8
 		buf.writeUInt32BE(n, 4);
-		// console.log(buf[4], buf[5], buf[6], buf[7])
 		values.copy(buf, 8, n, n + dsize);
-		
-		// console.log("sending", buf.length, this._port, this._address);
-		// console.log(buf);
+
+		// console.log("sending", n, buf.readUInt32BE(4), buf.length, this._port, this._address);
 		this.udpSndr.send(buf, 0, buf.length, this._port, this._address);
 	}
-	
+
 	// clear tiles before next run
-	this.clearTiles();
+	// this.clearTiles();
 }
 /*
 Grid.prototype.setTile = function(x, y, r, g, b) {

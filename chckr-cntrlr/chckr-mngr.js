@@ -3,7 +3,6 @@ var oscCli = new osc.Client('127.0.0.1', 5000);
 var Colr = require("tinycolor2");
 // color = new Colr("hsv 0.3 1 1");
 
-var Creature = require('./Creature.js');
 var Grid = require('./Grid.js');
 var World = require('./World.js');
 

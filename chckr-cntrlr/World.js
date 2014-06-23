@@ -1,7 +1,7 @@
 var osc = require('node-osc');
 var Grid = require('./Grid.js');
 var net = require('net');
-var Creature = require('./Creature.js');
+var Creature = require('./Creatures/_Creature.js');
 
 module.exports = World;
 
@@ -149,9 +149,11 @@ World.prototype.tick = function() {
 		if(this.creatures[i].alive) {
 			rts = this.creatures[i].renderTiles;
 			for(ndx in rts) {
-				var wmtile = this.creatures[i].worldMap[ndx][0]; // assuming only one grid per tile for now
-				var g = this.findGridById(wmtile[0]);
-				g.setTile([wmtile[1], wmtile[2]], rts[ndx]);
+				if(this.creatures[i].worldMap[ndx]) {
+					var wmtile = this.creatures[i].worldMap[ndx][0]; // assuming only one grid per tile for now
+					var g = this.findGridById(wmtile[0]);
+					g.setTile([wmtile[1], wmtile[2]], rts[ndx]);
+				}
 			}
 		}
 	}
@@ -165,7 +167,7 @@ World.prototype.tick = function() {
 	
 	var time2 = process.hrtime();
 	time2 = time2[0]+time2[1]/1000000000;
-	// console.log(time2 - time);
+	console.log(time2 - time);
 	
 	// console.log(this.grids[0].tiles[0][0]);
 }
