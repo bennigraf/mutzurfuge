@@ -19,7 +19,7 @@ wrld.addGrid({
 	pos: [0, 0],
 	address: ["127.0.0.1", 6001],
 	gravity: 'up',
-	transitions: [['top', 213]]
+	transitions: [['top', [213]]]
 });
 wrld.addGrid({
 	id: 213,
@@ -28,7 +28,7 @@ wrld.addGrid({
 	pos: [0, 0],
 	address: ["127.0.0.1", 5102],
 	gravity: 'none',
-	transitions: [['top', 142], ['bottom', 732]]
+	transitions: [['top', [142]], ['bottom', [732, 999]]]
 });
 // this one is "upside down"
 wrld.addGrid({
@@ -37,7 +37,15 @@ wrld.addGrid({
 	pos: [0, 0],
 	address: ["127.0.0.1", 6002],
 	gravity: 'down',
-	transitions: [['bottom', 213]]
+	transitions: [['bottom', [213]]]
+});
+wrld.addGrid({
+	id: 999,
+	size: [43, 17],
+	pos: [0, 0],
+	address: ["127.0.0.1", 6002],
+	gravity: 'down',
+	transitions: []
 });
 
 // runs the world! How epic!

@@ -21,7 +21,12 @@ World.prototype.addGrid = function(gridobj) {
 	}
 	if(gridobj.transitions) {
 		for (var i = 0; i < gridobj.transitions.length; i++) {
-			g.addTransition(gridobj.transitions[i][0], gridobj.transitions[i][1]);
+			var dir = gridobj.transitions[i][0] // dir
+			for(j in gridobj.transitions[i][1]) {
+				// console.log(dir, gridobj.transitions[i][1][j]);
+				g.addTransition(dir, gridobj.transitions[i][1][j]);
+			}
+			// g.addTransition(gridobj.transitions[i][0], gridobj.transitions[i][1]);
 		}
 	}
 	this.grids.push(g);
@@ -143,6 +148,11 @@ World.prototype.tick = function() {
 	var time2 = process.hrtime();
 	time2 = time2[0]+time2[1]/1000000000;
 	// console.log(time2 - time);
+	
+	// clear grids, make them all white
+	for(i in this.grids) {
+		this.grids[i].clearTiles();
+	}
 	
 	// "draw" stuff - get renderTiles from each creature, write it into tiles of grids, tell grids to send data
 	for(i in this.creatures) {

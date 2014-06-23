@@ -19,7 +19,7 @@ function Grid(id, w, h, offsetx, offsety) {
 	this.offsety = offsety;
 	
 	this.tiles = [];
-	this.clearTiles();
+	this.makeTiles();
 	
 	this.marker = this.makeMarkerFromId();
 	
@@ -36,12 +36,19 @@ function Grid(id, w, h, offsetx, offsety) {
 	//       duration: 1000
 	//     });
 }
-Grid.prototype.clearTiles = function() {
+Grid.prototype.makeTiles = function() {
 	this.tiles = [];
 	for (var x = 0; x < this.width; x++) {
 		this.tiles[x] = [];
 		for (var y = 0; y < this.height; y++) {
-			this.tiles[x][y] = new Colr("FFFFFF");
+			this.tiles[x][y] = new Colr({ r: 255, g: 255, b: 255 });
+		}
+	}
+}
+Grid.prototype.clearTiles = function() {
+	for (x in this.tiles) {
+		for(y in this.tiles[x]) {
+			this.tiles[x][y] = new Colr({ r: 255, g: 255, b: 255 });
 		}
 	}
 }
@@ -79,14 +86,15 @@ Grid.prototype.setGravity = function(g) {
 	this.gravity = g; // 'up', 'down', 'left', 'right'
 }
 Grid.prototype.addTransition = function(side, id) {
+	// console.log("--", side, id);
 	this.transitions.push([side, id]);
 	this.updateTransitionsMeta();
 }
 // sets _transitionsBySide from transitions for speed improvement
 Grid.prototype.updateTransitionsMeta = function() {
-	this._transitionsBySide = { 'top': false, 'left': false, 'bottom': false, 'right': false};
+	this._transitionsBySide = { 'top': [], 'left': [], 'bottom': [], 'right': []};
 	for (var i = 0; i < this.transitions.length; i++) {
-		this._transitionsBySide[this.transitions[i][0]] = this.transitions[i][1];
+		this._transitionsBySide[this.transitions[i][0]].push(this.transitions[i][1]);
 	}
 }
 // checks if tile is in range by local coords

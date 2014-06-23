@@ -1,5 +1,6 @@
 var Colr = require("tinycolor2");
 var LilQuad = require("./lilquad.js");
+var Rectr = require("./rectr.js");
 
 /*
 A Creature has a certain race (aka type) that defines it's behaviour and shape etc.
@@ -27,7 +28,8 @@ Creature.prototype.spawn = function(race) {
 	// console.log(this.clr);
 	
 	if(!race) {
-		race = 'lilquad';
+		race = 'rectr';
+		// race = 'lilquad';
 	}
 	this.setRace(race);
 	// do race-specific stuff
@@ -40,6 +42,9 @@ Creature.prototype.setRace = function(_race) {
 	switch (this.race) {
 	case "lilquad":
 		this.cr = new LilQuad(this);
+		break;
+	case "rectr":
+		this.cr = new Rectr(this);
 		break;
 	default:
 		break;
@@ -74,31 +79,37 @@ Creature.prototype.makeWorldMap = function() {
 		wm.yspan[1] = g.height - rootCoord[1] - 1 + boardoffset[1];
 		tmpWorldMaps[g.id] = wm;
 		for(t in g.transitions) {
-			var trans = g.transitions[t];
-			var newg = this.world.findGridById(trans[1]);
-			var newOffset = [0, 0];
-			// only go on if trans is not set to false and board is not in worldMap yet
-			if(trans[1] && !tmpWorldMaps[trans[1]]) {
-				if(trans[0] == 'top') {
-					newOffset[0] = boardoffset[0];
-					newOffset[1] = boardoffset[1] - newg.height;
-				} else if (trans[0] == 'bottom') {
-					newOffset[0] = boardoffset[0];
-					newOffset[1] = boardoffset[1] + g.height;
-				} else if (trans[0] == 'right') {
-					newOffset[0] = boardoffset[0] + g.width;
-					newOffset[1] = boardoffset[1];
-				} else if (trans[0] == 'left') {
-					newOffset[0] = boardoffset[0] - newg.width;
-					newOffset[1] = boardoffset[1];
+			var transes = g.transitions[t];
+			var transdir = transes[0];
+			console.log("===", transes);
+			// for(i in transes[1]) {
+				var newg = this.world.findGridById(transes[1]);
+				var newOffset = [0, 0];
+				// only go on if board is not in worldMap yet
+				if(!tmpWorldMaps[transes[1]]) {
+					if(transdir == 'top') {
+						newOffset[0] = boardoffset[0];
+						newOffset[1] = boardoffset[1] - newg.height;
+					} else if (transdir == 'bottom') {
+						newOffset[0] = boardoffset[0];
+						newOffset[1] = boardoffset[1] + g.height;
+					} else if (transdir == 'right') {
+						newOffset[0] = boardoffset[0] + g.width;
+						newOffset[1] = boardoffset[1];
+					} else if (transdir == 'left') {
+						newOffset[0] = boardoffset[0] - newg.width;
+						newOffset[1] = boardoffset[1];
+					}
+					addTransition(newg, newOffset, rootCoord);
 				}
-				addTransition(newg, newOffset, rootCoord);
-			}
+			// }
 		}
 	}.bind(this);
 	// execute recursive function from above
 	var g = this.world.findGridById(this.roots[0]);
 	addTransition(g, [0, 0], [this.roots[1], this.roots[2]]);
+	// console.log(g.transitions);
+	console.log(tmpWorldMaps);
 	
 	// now make super world map with indizes ('x.y') mapped to boardids, whoop whoop
 	for (boardid in tmpWorldMaps) {
@@ -136,6 +147,8 @@ Creature.prototype.tick = function() {
 			delete this.tiles[ndx];
 		}
 	}
+	
+	// this.renderTiles = new Array();
 	// console.log(this.cr);
 	this.cr.tick();
 	
