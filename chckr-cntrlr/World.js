@@ -11,6 +11,7 @@ function World() {
 	this.tcpServer = null;
 	this.creatures = new Array();
 	this.grids = new Array();
+	this.mode = "grid";
 	
 	this._gridsById;
 }
@@ -37,8 +38,10 @@ World.prototype._updateGridMeta = function() {
 	this._gridsById = [];
 	for (var i = 0; i < this.grids.length; i++) {
 		this._gridsById[this.grids[i].id] = this.grids[i];
+
 	}
 }
+// used to receive hits from mobile
 World.prototype.setOscServer = function(port, host) {
 	this.oscServer = new osc.Server(port, host);
 	
@@ -55,63 +58,65 @@ World.prototype.setOscServer = function(port, host) {
 			console.log("hit!", boardid, xpos, ypos);
 			this.spawnCreature(boardid, xpos, ypos);
 		}
+		if(msg[0] == '/mode') {
+			if(msg[1] != null) {
+				this.mode = msg[1]; // grid or mawi right now
+			}
+		}
 	}.bind(this));
 }
+// used for SC
 World.prototype.setOscClient = function(port, host) {
 	this.oscSndr = new osc.Client(host, port);
 }
+// this server listens for 
+// a) connections from mobile apps which send coords
+// b) connections from client servers which want that coords (mwidyanata)
 World.prototype.setTcpServer = function(port, host) {
 	var client = new net.Socket();
 	
 	var server = net.createServer();
 	server.listen(port, host);
 	// console.log('Server listening on ' + server.address().address +':'+ server.address().port);
-	var masock = [];
+	var masocks = [];
+	var mawiaddrs = ["10.0.0.10", "10.0.0.11", "10.0.0.12", "10.0.0.13", "10.0.0.14", "10.0.0.15", "10.0.0.16", "10.0.0.17", "10.0.0.18", "10.0.0.19"];
 	
 	server.on('connection', function(sock) {
 	    console.log('CONNECTED: ' + sock.remoteAddress +':'+ sock.remotePort);
-		if(sock.remoteAddress == "10.0.0.2") {
-			masock.push(sock);
+		for(i in mawiaddrs) {
+			if(sock.remoteAddress == mawiaddrs[i]) {
+				masocks.push(sock);
+			}
 		}
-		if(sock.remoteAddress == "10.0.0.1" && sock.remotePort == 12333) {
-			masock.push(sock);
-		}
-		/*
-		client.connect(12333, '10.0.0.2', function() {
-			console.log('Sending');
-			client.write(data);
-			client.end();
-			console.log("closed Client");
-		});
-		*/
+		
 		sock.on('error', function(e) {
 			console.log(e);
 		});
-		
 		sock.on('data', function(data) {
-			if(masock) {
-				for(i in masock) {
-					console.log("sending");
-					masock[i].write(data);
+			if(this.mode == "grid") {
+				try {
+					data = data.toString(); // convert from buffer to string
+					data = data.replace(/\[\/TCP\]/g, "");
+					data = data.replace(/\\n/g, "");
+					data = JSON.parse(data);
+			    } catch (ex) {
+					console.log(ex);
+			        data = null;
+			    }
+				console.log(data);
+				if(data) {
+					this.spawnCreature(data.id, data.x, data.y);
 				}
-			}
-			try {
-				data = data.toString(); // convert from buffer to string
-				data = data.replace(/\[\/TCP\]/g, "");
-				data = data.replace(/\\n/g, "");
-				data = JSON.parse(data);
-		    } catch (ex) {
-				console.log(ex);
-		        data = null;
-		    }
-			console.log(data);
-			if(data) {
-				this.spawnCreature(data.id, data.x, data.y);
+			} else if (this.mode == "mawi") {
+				for(i in masocks) {
+					console.log("sending on to mawi");
+					masocks[i].write(data);
+				}
 			}
 		}.bind(this));
 	}.bind(this));
 }
-World.prototype.spawnCreature = function(boardid, x, y) {
+World.prototype.spawnCreature = function(boardid, x, y) { // x and y are 0..1 here
 	var c = new Creature(this);
 	var spwnCoords = this.findGridCoords(boardid, x, y);
 	if(spwnCoords) {
@@ -120,6 +125,30 @@ World.prototype.spawnCreature = function(boardid, x, y) {
 		this.creatures.push(c);
 	} else {
 		console.log("couldn't find point for creature");
+	}
+}
+World.prototype.autoMode = function() {
+	var cpg = 3; // max creatures per grid
+	// counts creatures per grid
+	// if there are less than 3 creatures per grid, maybe spawn one
+	// creatures have limited life spans, so they die anyways
+	var gridCreatureCounts = {};
+	for (i in this.creatures) {
+		if(!gridCreatureCounts[this.creatures[i].roots[0]]) {
+			gridCreatureCounts[this.creatures[i].roots[0]] = 1;
+		} else {
+			gridCreatureCounts[this.creatures[i].roots[0]] += 1;
+		}
+	}
+	for(i in this.grids) {
+		var g = this.grids[i];
+		if(!gridCreatureCounts[g.id]) {
+			gridCreatureCounts[g.id] = 0;
+		}
+		var spawnProp = (1 - Math.min(cpg, gridCreatureCounts[g.id]) / cpg) * 0.1; // 0.1 to 0
+		if(Math.random() < spawnProp) {
+			this.spawnCreature(g.id, Math.random(), Math.random());
+		}
 	}
 }
 World.prototype.setTile = function(x, y, r, g, b) {
@@ -131,6 +160,8 @@ World.prototype.setTile = function(x, y, r, g, b) {
 	};
 }
 World.prototype.tick = function() {
+	// this.autoMode();
+	
 	var time = process.hrtime();
 	time = time[0]+time[1]/1000000000;
 	// update creatures, remove dead ones
@@ -176,9 +207,12 @@ World.prototype.tick = function() {
 			rts = this.creatures[i].renderTiles;
 			for(ndx in rts) {
 				if(this.creatures[i].worldMap[ndx]) {
-					var wmtile = this.creatures[i].worldMap[ndx][0]; // assuming only one grid per tile for now
-					var g = this.findGridById(wmtile[0]);
-					g.setTile([wmtile[1], wmtile[2]], rts[ndx]);
+					var wmtiles = this.creatures[i].worldMap[ndx];
+					for(j in wmtiles) {
+						var wmtile = wmtiles[j];
+						var g = this.findGridById(wmtile[0]);
+						g.setTile([wmtile[1], wmtile[2]], rts[ndx]);
+					}
 				}
 			}
 		}
@@ -300,22 +334,6 @@ World.prototype.findGridById = function(id) {
 }
 
 World.prototype.run = function() {
-	/*
-	setInterval(function() {
-		console.log("running");
-		this.crtr = new Creature(this);
-		this.crtr.spawn(4, 4);
-		this.interval = setInterval(function() {
-			this.crtr.tick();
-		}.bind(this), 68);
-		setTimeout(function() {
-			console.log("clearing");
-			clearInterval(this.interval);
-			this.clearTiles();
-		}.bind(this), 8500);
-	}.bind(this), 9000);
-	*/
-	
 	this.interval = setInterval(function() {
 		this.tick();
 	}.bind(this), 50);

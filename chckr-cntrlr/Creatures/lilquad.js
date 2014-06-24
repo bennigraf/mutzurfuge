@@ -1,5 +1,6 @@
 var Colr = require("tinycolor2");
 // var Creature = require("_Creature.js");
+var Twn = require('shifty');
 
 module.exports = LilQuad;
 
@@ -14,29 +15,38 @@ function LilQuad(mother) {
 LilQuad.prototype.spawn = function() {
 	this.rayProp = 0.0;
 	this.rays = [];
+	this.diedAt = 0;
+
+	this.amp = new Twn();
+	this.amp.set({s: 1});
 }
 
 LilQuad.prototype.tick = function() {
 	
-	this.rayProp += 0.01;
+	this.rayProp += 0.001;
 	
 	// 'head' wanders around in a rect, but sometimes jumps a little off
 	var steps = [[1.0, 0], [0, 1.0], [-1.0, 0], [0, -1.0]];
 	var newTile = [0.0, 0.0];
-	var nextStep = this.m.age + (Math.random() < 0.2) * 1;
+	var offstepProp = Math.random() < 0.23;
+	var nextStep = this.m.age + offstepProp * 1;
 	// console.log(nextStep);
 	newTile[0] = parseInt(this.m.head[0]) + parseInt(steps[nextStep%4][0]);
 	newTile[1] = parseInt(this.m.head[1]) + parseInt(steps[nextStep%4][1]);
 	if(!this.m.worldMap[newTile[0]+"."+newTile[1]]) { // checks if tile is available to creature
 		newTile = this.m.head;
 	}
-	// console.log(newTile);
 	this.m.head = newTile;
 	this.m.setTile(newTile);
-	// console.log(this.head[1] - 10);
+	
+	if(offstepProp) {
+		this.m.world.oscSndr.send('/creature/setValue', this.m.uid, 'offstep', 1);
+	}
+	
+	this.m.world.oscSndr.send('/creature/setValue', this.m.uid, 'raysum', this.rays.length);
 	
 	// add ray from time to time
-	if(this.rayProp > Math.random()) {
+	if(this.rayProp > Math.random() && this.diedAt == 0) {
 	// if(false) {
 		this.rayProp = 0;
 		var ray = {
@@ -47,6 +57,23 @@ LilQuad.prototype.tick = function() {
 			dead: false
 		};
 		this.rays.push(ray);
+	}
+	
+	// maybe die if older than 33 and no rays are active TODO: fade out somehow
+	if(this.m.age > 33 && this.rays.length == 0 && this.diedAt == 0) {
+		var dyingprop = (this.m.age - 33) / 300;
+		if(Math.random() < dyingprop) {
+			// this.m.alive = false;
+			this.diedAt = this.m.age;
+			this.amp.tween({
+				from: {s: 1},
+				to: {s: 0},
+				duration: 338
+			});
+		}
+	}
+	if(this.diedAt > 0 && this.m.age - this.diedAt > 33) {
+		this.m.alive = false;
 	}
 	
 	// update rays
@@ -80,10 +107,12 @@ LilQuad.prototype.tick = function() {
 	}
 	
 	////// draw stuff from here
+	var white = new Colr({r: 255, g: 255, b: 255});
 	this.m.renderTiles = new Array();
 	for(ndx in this.m.tiles) {
 		var t = this.m.tiles[ndx];
 		var c = Colr.lighten(this.m.clr, 5 * t[1]);
+		c = Colr.mix(white, c, this.amp.get()['s'] * 100);
 		this.m.renderTiles[ndx] = c;
 		// console.log(ndx);
 		// console.log(c);

@@ -125,7 +125,17 @@ Grid.prototype.getNeighbour = function(coords) {
 }
 
 Grid.prototype.setTile = function(pos, col) {
-	this.tiles[pos[0]][pos[1]] = col;
+	var white = Colr({r: 255, g: 255, b: 255});
+	var c = this.tiles[pos[0]][pos[1]];
+	var newc;
+	if(!Colr.equals(c, white)) {
+		// newc = Colr({r: Math.min(c._r , col._r) , g: Math.min(c._g , col._g) , b: Math.min(c._b , col._b) });
+		// newc = Colr({r: c._r/255 * col._r, g: c._g/255 * col._g, b: c._b/255 * col._b, })
+		newc = Colr.mix(c, col, 50);
+	} else {
+		newc = col;
+	}
+	this.tiles[pos[0]][pos[1]] = newc;
 }
 Grid.prototype.sendData = function() {
 	var ln = 0.000000001; // this makes sure it's always floats

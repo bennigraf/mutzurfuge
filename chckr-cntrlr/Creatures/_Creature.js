@@ -3,6 +3,8 @@ var uuid = require('node-uuid');
 var LilQuad = require("./lilquad.js");
 var Rectr = require("./rectr.js");
 
+var RACES = ['lilquad', 'rectr'];
+
 /*
 A Creature has a certain race (aka type) that defines it's behaviour and shape etc.
  */
@@ -30,8 +32,8 @@ Creature.prototype.spawn = function(race) {
 	// console.log(this.clr);
 	
 	if(!race) {
-		race = 'rectr';
-		// race = 'lilquad';
+		var ndx = Math.floor(Math.random() * RACES.length);
+		race = RACES[ndx];
 	}
 	this.setRace(race);
 	// do race-specific stuff
@@ -40,7 +42,6 @@ Creature.prototype.spawn = function(race) {
 	this.worldMap = []; // ndx is x.y, contains array of boardids serving this tile
 	
 	// send spawn-message
-	console.log(this.uid, this.race);
 	this.world.oscSndr.send('/creature/spawn', this.uid, this.race);
 }
 Creature.prototype.setRace = function(_race) {
@@ -87,7 +88,6 @@ Creature.prototype.makeWorldMap = function() {
 		for(t in g.transitions) {
 			var transes = g.transitions[t];
 			var transdir = transes[0];
-			console.log("===", transes);
 			// for(i in transes[1]) {
 				var newg = this.world.findGridById(transes[1]);
 				var newOffset = [0, 0];
@@ -138,9 +138,6 @@ Creature.prototype.makeWorldMap = function() {
 }
 Creature.prototype.tick = function() {
 	this.age = this.age + 1;
-	if(this.age > 100) {
-		// this.alive = false;
-	}
 	
 	// set age of every tile +=1
 	for(ndx in this.tiles) {
@@ -158,6 +155,11 @@ Creature.prototype.tick = function() {
 	// console.log(this.cr);
 	this.cr.tick();
 	
+	// kill creature after it's own tick
+	if(this.age > 1 && !this.alive) {
+		// this.alive = false;
+		this.world.oscSndr.send('/creature/kill', this.uid);
+	}
 	
 	// set head position to audio thing (grid-id in this case, map backwards in sc)
 	var headStr = this.head[0] + "." + this.head[1];

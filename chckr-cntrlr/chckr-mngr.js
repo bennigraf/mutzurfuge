@@ -27,7 +27,7 @@ wrld.addGrid({
 	size: [43, 40],
 	// size: [43, 27],
 	pos: [0, 0],
-	address: ["10.0.0.1", 5102],
+	address: ["10.0.0.17", 5100],
 	gravity: 'none',
 	transitions: [['top', [484, 286]], ['bottom', [222]]] // also connected to f9
 });
@@ -53,10 +53,10 @@ wrld.addGrid({
 wrld.run();
 
 wrld.spawnCreature(99, Math.random(),Math.random());
-wrld.spawnCreature(99, Math.random(), Math.random());
-wrld.spawnCreature(99, Math.random(), Math.random());
-wrld.spawnCreature(99, Math.random(), Math.random());
-wrld.spawnCreature(99, Math.random(), Math.random());
+// wrld.spawnCreature(99, Math.random(), Math.random());
+// wrld.spawnCreature(99, Math.random(), Math.random());
+// wrld.spawnCreature(99, Math.random(), Math.random());
+// wrld.spawnCreature(99, Math.random(), Math.random());
 
 ////////////////////////// now:
 // Creatures are 'blind', they don't see the whole world and what's going on it.
