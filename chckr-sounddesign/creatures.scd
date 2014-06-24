@@ -13,7 +13,7 @@ SynthDef(\rectr, {
 	// var wallhit = Trig.ar(Trig.ar(\wallhit.tr, 0.1).poll * (1 - Trig.ar(TDelay.ar(Trig.ar(\wallhit.tr), 0.05), 1.2)).poll);
 	var wallhit = Trig.ar(\wallhit.tr);
 
-	frqs = frqs + \speed.kr(0).linexp(0, 1, 0.1, 200).lag(3);
+	frqs = frqs + \speed.kr(0).linexp(0, 1, 0.1, 200).lag(3) + \size.kr(0).linexp(0.001, 1, 220, 1).lag(0.02);
 
 	snd = SinOsc.ar(frqs, Rand(0, pi), -12.dbamp).sum.softclip;
 	snd = RLPF.ar(snd, filtfrq, 0.3);
@@ -29,6 +29,7 @@ SynthDef(\rectr, {
 	snd = snd + cmbsnd;
 
 
+	snd = snd * EnvGen.ar(Env.asr(0, 1, 0.5), \alive.ar(1), doneAction: 2);
 
 	panenv1 = EnvGen.ar(Env.linen(0.8, 1/20, 0.8), Trig1.ar(\pantrig0.tr(0), 0.1));
 	panenv2 = EnvGen.ar(Env.linen(0.8, 1/20, 0.8), Trig1.ar(\pantrig1.tr(0), 0.1));
@@ -44,5 +45,48 @@ SynthDef(\rectr, {
 	Out.ar(0, pannedout2 * -6.dbamp);
 	Out.ar(0, pannedout3 * -6.dbamp);
 	Out.ar(0, pannedout4 * -6.dbamp);
+}).add;
+)
+
+
+
+
+(
+SynthDef(\lilquad, {
+	var snd, revsnd;
+	var panenv1, panenv2, panenv3, panenv4;
+	var pannedout1, pannedout2, pannedout3, pannedout4;
+
+	var offstep = \offstep.tr(0);
+	var baseFreq = TRand.kr(0, 1, offstep).linexp(0, 1, 5329, 8392);
+	var offstepEnv = EnvGen.ar(Env.asr(0.01, 1, 0.2), offstep);
+	snd = SinOsc.ar(baseFreq, 0, 44.dbamp).softclip * LFPulse.ar(19, 0, 0.3) * offstepEnv;
+	snd = HPF.ar(snd, 4839);
+
+	revsnd = GVerb.ar(snd, 93, 8, 0.1, drylevel: 0, earlyreflevel: 0, taillevel: 1).sum * -12.dbamp;
+	revsnd = BPF.ar(revsnd, baseFreq + 1000, \raysum.kr(0).linlin(0, 1, 0.1, 0.001).lag(2), 20.dbamp);
+
+	snd = MulAdd(snd, -8.dbamp) + (revsnd * \raysum.kr(0).linexp(0, 1, -55, 0).dbamp.lag(2));
+
+	snd = snd * -6.dbamp;
+
+	snd = snd * EnvGen.ar(Env.asr(0, 1, 0.5), \alive.ar(1), doneAction: 2);
+
+	// Out.ar(0, snd);
+
+	panenv1 = EnvGen.ar(Env.linen(0.8, 1/20, 0.8), Trig1.ar(\pantrig0.tr(0), 0.1));
+	panenv2 = EnvGen.ar(Env.linen(0.8, 1/20, 0.8), Trig1.ar(\pantrig1.tr(0), 0.1));
+	panenv3 = EnvGen.ar(Env.linen(0.8, 1/20, 0.8), Trig1.ar(\pantrig2.tr(0), 0.1));
+	panenv4 = EnvGen.ar(Env.linen(0.8, 1/20, 0.8), Trig1.ar(\pantrig3.tr(0), 0.1));
+	pannedout1 = PanX.ar(4, snd, \panpos0.kr(0).lag(1), panenv1);
+	pannedout2 = PanX.ar(4, snd, \panpos1.kr(0).lag(1), panenv2);
+	pannedout3 = PanX.ar(4, snd, \panpos2.kr(0).lag(1), panenv3);
+	pannedout4 = PanX.ar(4, snd, \panpos3.kr(0).lag(1), panenv4);
+
+	Out.ar(0, [pannedout1.sum + pannedout2.sum, pannedout3.sum + pannedout4.sum]);
+	// Out.ar(0, pannedout1 * -6.dbamp);
+	// Out.ar(0, pannedout2 * -6.dbamp);
+	// Out.ar(0, pannedout3 * -6.dbamp);
+	// Out.ar(0, pannedout4 * -6.dbamp);
 }).add;
 )

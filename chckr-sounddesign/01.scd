@@ -1,7 +1,8 @@
 s.options.device_(ServerOptions.devices[4]);
-
+s.options.memSize_(s.options.memSize * 32)
 s.boot
 s.scope
+s.latency_(1.2)
 
 (
 x.free;
@@ -21,6 +22,7 @@ x = {
 }.play
 );
 
+~creatures = ();
 (
 ~creatures.keysValuesDo({ |uid, snth|
 	snth.free;
@@ -43,7 +45,13 @@ OSCdef(\spawnCreature, { |msg|
 	// create synth of type race
 	// add to creatures-object under key uid
 	~creatures[uid] = Synth(race);
+	~creatures[uid].set(\alive, 1);
 }, '/creature/spawn');
+OSCdef(\killCreature, { |msg|
+	var uid = msg[1];
+	["killing", uid].postln;
+	~creatures[uid].set(\alive, 0);
+}, '/creature/kill');
 OSCdef(\setCrtrValue, { |msg|
 	var uid = msg[1];
 	// set values pairwise, allows setting multiple via one osc call to sclang
