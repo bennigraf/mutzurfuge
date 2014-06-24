@@ -1,4 +1,5 @@
 var Colr = require("tinycolor2");
+var uuid = require('node-uuid');
 var LilQuad = require("./lilquad.js");
 var Rectr = require("./rectr.js");
 
@@ -13,6 +14,7 @@ function Creature(env) {
 	this.alive = false;
 	this.roots = [];
 	this.tiles = [];
+	this.uid = uuid.v1();
 	// render tiles are what's represented to the outside world, inside we deal with tiles
 	// renderTiles are created on each tick and may contain more tiles that this.tiles
 	this.renderTiles = []; 
@@ -36,6 +38,10 @@ Creature.prototype.spawn = function(race) {
 	this.cr.spawn();
 	
 	this.worldMap = []; // ndx is x.y, contains array of boardids serving this tile
+	
+	// send spawn-message
+	console.log(this.uid, this.race);
+	this.world.oscSndr.send('/creature/spawn', this.uid, this.race);
 }
 Creature.prototype.setRace = function(_race) {
 	this.race = _race;
@@ -109,7 +115,7 @@ Creature.prototype.makeWorldMap = function() {
 	var g = this.world.findGridById(this.roots[0]);
 	addTransition(g, [0, 0], [this.roots[1], this.roots[2]]);
 	// console.log(g.transitions);
-	console.log(tmpWorldMaps);
+	// console.log(tmpWorldMaps);
 	
 	// now make super world map with indizes ('x.y') mapped to boardids, whoop whoop
 	for (boardid in tmpWorldMaps) {
@@ -152,6 +158,13 @@ Creature.prototype.tick = function() {
 	// console.log(this.cr);
 	this.cr.tick();
 	
+	
+	// set head position to audio thing (grid-id in this case, map backwards in sc)
+	var headStr = this.head[0] + "." + this.head[1];
+	// set multiple positions!!
+	for(i in this.worldMap[headStr]) {
+		this.world.oscSndr.send('/creature/setOutGrid', this.uid, i, this.worldMap[headStr][i][0]);
+	}
 };
 Creature.prototype.setTile = function(tile) {
 	var path = tile[0]+"."+tile[1];

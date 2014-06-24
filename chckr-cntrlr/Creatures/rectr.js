@@ -11,11 +11,14 @@ Rectr.prototype.spawn = function() {
 	this.size = 8.0; // a side will be this + 1 long, use only even numbers!
 	this.rotation = 0;
 	this.rotationSpeed = (0.1 + Math.random()) * (Math.round(Math.random()) * 2 - 1);
-	this.movement = [0, 0];
-	this.movement[0] = (1 + Math.random()) * (Math.round(Math.random()) * 2 - 1);
-	this.movement[1] = (1 + Math.random()) * (Math.round(Math.random()) * 2 - 1);
+	this.movement = Vec2D.ArrayVector(0, 0);
+	this.movement.setX((1 + Math.random()) * (Math.round(Math.random()) * 2 - 1));
+	this.movement.setY((1 + Math.random()) * (Math.round(Math.random()) * 2 - 1));
 	this.speed = 1 + Math.round(Math.random() * 5);
 	// this.movement = [0, 0];
+	
+	this.traceTiles = [];
+	this.lastHitSend = 0;
 	
 	this.rectVects = new Array();
 	// top side, l2r
@@ -45,24 +48,45 @@ Rectr.prototype.tick = function() {
 		// head follows movement-vect until it hits a wall, then vect gets updated
 		var newTile = [0.0, 0.0];
 		// console.log(nextStep);
-		newTile[0] = Math.round(this.m.head[0] + this.movement[0]);
-		newTile[1] = Math.round(this.m.head[1] + this.movement[1]);
+		newTile[0] = Math.round(this.m.head[0] + this.movement.getX());
+		newTile[1] = Math.round(this.m.head[1] + this.movement.getY());
 		if(!this.m.worldMap[newTile[0]+"."+newTile[1]]) { // checks if tile is available to creature
 			newTile = this.m.head;
 			// update movement-vector
-			this.movement[0] = (1 + Math.random()) * (Math.round(Math.random()) * 2 - 1);
-			this.movement[1] = (1 + Math.random()) * (Math.round(Math.random()) * 2 - 1);
+			this.movement.setX((1 + Math.random()) * (Math.round(Math.random()) * 2 - 1));
+			this.movement.setY((1 + Math.random()) * (Math.round(Math.random()) * 2 - 1));
 			this.rotationSpeed = (0.1 + Math.random()) * (Math.round(Math.random()) * 2 - 1);
+
+			if(this.m.age - this.lastHitSend > 5) {
+				this.m.world.oscSndr.send('/creature/setValue', this.m.uid, 'wallhit', 1);
+				this.lastHitSend = this.m.age;
+			}
 		}
 		this.m.head = newTile;
 		// this.m.setTile(newTile);
 	}
 	
+	for (ndx in this.traceTiles) {
+		this.traceTiles[ndx] += 1;
+		if(this.traceTiles[ndx] == 22) {
+			delete this.traceTiles[ndx];
+		}
+	}
+	
 	this.rotation = this.rotation + 0.15 * this.rotationSpeed;
+	this.m.world.oscSndr.send('/creature/setValue', this.m.uid, 'rotation', this.rotation);
+	var speed = this.movement.length();
+	speed = (speed - 1.41421) / 1.41421; // scale to 0..1
+	this.m.world.oscSndr.send('/creature/setValue', this.m.uid, 'speed', speed);
 	
 	
 	////// draw stuff from here
 	this.m.renderTiles = new Array();
+	
+	for(ndx in this.traceTiles) {
+		var fact = this.traceTiles[ndx];
+		this.m.renderTiles[ndx] = Colr.lighten(this.m.clr, 30 + 1 * fact);
+	}
 	
 	var headVect = Vec2D.ArrayVector(this.m.head[0], this.m.head[1]);
 	// draw vectors that represent tiles
@@ -75,6 +99,7 @@ Rectr.prototype.tick = function() {
 		var str = Math.round(tv.getX()) + "." + Math.round(tv.getY());
 		if(this.m.worldMap[str]) {
 			this.m.renderTiles[str] = this.m.clr;
+			this.traceTiles[str] = 0;
 		}
 	}
 	// console.log(Object.keys(this.m.renderTiles).length);

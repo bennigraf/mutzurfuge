@@ -185,6 +185,19 @@ Grid.prototype.sendData = function() {
 	// clear tiles before next run
 	// this.clearTiles();
 }
+
+// calculate a normalized "sum" of how much of the grid is colored
+Grid.prototype.getNormalizedSum = function() {
+	var sum = 0;
+	for (x in this.tiles) {
+		for(y in this.tiles[x]) {
+			// console.log(this.tiles[x][y]._r);
+			sum += this.tiles[x][y]._r + this.tiles[x][y]._g + this.tiles[x][y]._b;
+		}
+	}
+	// console.log(sum);
+	return 1 - sum / (this.width * this.height * 3 * 255);
+}
 /*
 Grid.prototype.setTile = function(x, y, r, g, b) {
 	var ln = 0.000000001;

@@ -8,54 +8,55 @@ var World = require('./World.js');
 
 var wrld = new World();
 wrld.setOscServer(12332, '0.0.0.0');
+wrld.setOscClient(57120, '0.0.0.0');
 wrld.setTcpServer(12333, '0.0.0.0');
 
 // each grid has one or more transitions to other grids; 
 // and obviously a size and an address
 // and a gravity would be nice
 wrld.addGrid({
-	id: 732,
+	id: 484, // f6
 	size: [43, 17],
 	pos: [0, 0],
-	address: ["127.0.0.1", 6001],
-	gravity: 'up',
-	transitions: [['top', [213]]]
+	address: ["10.0.0.2", 5100],
+	gravity: 'down',
+	transitions: [['bottom', [99]]]
 });
 wrld.addGrid({
-	id: 213,
-	// size: [43, 40],
-	size: [43, 27],
+	id: 99, // f7
+	size: [43, 40],
+	// size: [43, 27],
 	pos: [0, 0],
-	address: ["127.0.0.1", 5102],
+	address: ["10.0.0.1", 5102],
 	gravity: 'none',
-	transitions: [['top', [142]], ['bottom', [732, 999]]]
+	transitions: [['top', [484, 286]], ['bottom', [222]]] // also connected to f9
 });
 // this one is "upside down"
 wrld.addGrid({
-	id: 142,
+	id: 222, // f8
 	size: [43, 17],
 	pos: [0, 0],
-	address: ["127.0.0.1", 6002],
-	gravity: 'down',
-	transitions: [['bottom', [213]]]
+	address: ["10.0.0.3", 5000],
+	gravity: 'up',
+	transitions: [['top', [99]]]
 });
 wrld.addGrid({
-	id: 999,
+	id: 286, // f5, connected to f7
 	size: [43, 17],
 	pos: [0, 0],
 	address: ["127.0.0.1", 6002],
 	gravity: 'down',
-	transitions: []
+	transitions: [['top', [99]]]
 });
 
 // runs the world! How epic!
 wrld.run();
 
-wrld.spawnCreature(213, Math.random(),Math.random());
-wrld.spawnCreature(213, Math.random(), Math.random());
-wrld.spawnCreature(213, Math.random(), Math.random());
-wrld.spawnCreature(142, Math.random(), Math.random());
-wrld.spawnCreature(732, Math.random(), Math.random());
+wrld.spawnCreature(99, Math.random(),Math.random());
+wrld.spawnCreature(99, Math.random(), Math.random());
+wrld.spawnCreature(99, Math.random(), Math.random());
+wrld.spawnCreature(99, Math.random(), Math.random());
+wrld.spawnCreature(99, Math.random(), Math.random());
 
 ////////////////////////// now:
 // Creatures are 'blind', they don't see the whole world and what's going on it.

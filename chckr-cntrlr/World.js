@@ -7,6 +7,7 @@ module.exports = World;
 
 function World() {
 	this.oscServer = null;
+	this.oscSndr = null;
 	this.tcpServer = null;
 	this.creatures = new Array();
 	this.grids = new Array();
@@ -56,18 +57,24 @@ World.prototype.setOscServer = function(port, host) {
 		}
 	}.bind(this));
 }
+World.prototype.setOscClient = function(port, host) {
+	this.oscSndr = new osc.Client(host, port);
+}
 World.prototype.setTcpServer = function(port, host) {
 	var client = new net.Socket();
 	
 	var server = net.createServer();
 	server.listen(port, host);
 	// console.log('Server listening on ' + server.address().address +':'+ server.address().port);
-	var masock = null;
+	var masock = [];
 	
 	server.on('connection', function(sock) {
 	    console.log('CONNECTED: ' + sock.remoteAddress +':'+ sock.remotePort);
 		if(sock.remoteAddress == "10.0.0.2") {
-			masock = sock;
+			masock.push(sock);
+		}
+		if(sock.remoteAddress == "10.0.0.1" && sock.remotePort == 12333) {
+			masock.push(sock);
 		}
 		/*
 		client.connect(12333, '10.0.0.2', function() {
@@ -83,8 +90,10 @@ World.prototype.setTcpServer = function(port, host) {
 		
 		sock.on('data', function(data) {
 			if(masock) {
-				console.log("sending");
-				masock.write(data);
+				for(i in masock) {
+					console.log("sending");
+					masock[i].write(data);
+				}
 			}
 			try {
 				data = data.toString(); // convert from buffer to string
@@ -126,6 +135,13 @@ World.prototype.tick = function() {
 	time = time[0]+time[1]/1000000000;
 	// update creatures, remove dead ones
 	// console.log("tick");
+	
+	// tell sound-part it's ticking
+	if(this.oscSndr) {
+		this.oscSndr.send('/world', 'tick');
+	}
+	
+	
 	var toDie = new Array();
 	for (var i = 0; i < this.creatures.length; i++) {
 		this.creatures[i].tick();
@@ -172,6 +188,9 @@ World.prototype.tick = function() {
 	// console.log(time2 - time);
 	
 	for (var i = 0; i < this.grids.length; i++) {
+		// get the amout of action going on ont the grid
+		var nsum = this.grids[i].getNormalizedSum();
+		this.oscSndr.send('/grid/action', this.grids[i].id, nsum);
 		this.grids[i].sendData();
 	}
 	
