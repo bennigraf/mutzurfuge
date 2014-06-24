@@ -13,6 +13,7 @@
 // gui-stuff
 #include "SimpleGUI.h"
 
+#include "cinderSyphon.h"
 #include "cinder/qtime/QuickTime.h"
 
 // udp server instead of osc
@@ -52,6 +53,9 @@ public:
     int oscListenerNewPort;
     bool oscListenerRunning;
     
+    syphonClient mClientSyphon;
+    ci::gl::Fbo  mSyphonFbo;
+    
 //    std::string playback;
     map<string, bool> playback; // easier to control with gui
 	
@@ -61,6 +65,7 @@ public:
     
     qtime::MovieGlRef		mMovie;
     gl::Texture				mFrameTexture, mInfoTexture;
+    void loadMovie(string movieFile);
     
     
     // udp server stuff
@@ -117,7 +122,7 @@ void checker3App::setup() {
         }
     }
     
-    udpMtu = 16000;
+    udpMtu = 1496;
     // udp server, see examples in https://github.com/BanTheRewind/Cinder-Asio
     mServer = UdpServer::create( io_service() );
 	// Add callbacks to work with the server asynchronously.
@@ -145,8 +150,19 @@ void checker3App::setup() {
     gui->addParam("Syphon", &playback["syphon"], false, 1);
 	gui->load(CONFIG_FILE);
     
+    loadMovie("anna.mov");
+    
+    //// syphon
+    mClientSyphon.setup();
+//    mClientSyphon.set("front", "3dTest2Debug"); // front back bottom chessboard
+//    mClientSyphon.set("chessboard", "chessBoard_2Debug");
+    mClientSyphon.set("", "Simple Server");
+    mClientSyphon.bind();
+    mSyphonFbo = gl::Fbo(1280, 800, GL_RGB);
+}
+void checker3App::loadMovie(string movieFile) {
     try {
-        mMovie = qtime::MovieGl::create(loadAsset("anna.mov"));
+        mMovie = qtime::MovieGl::create(loadAsset(movieFile));
         mMovie->setLoop();
         mMovie->play();
     } catch( ... ) {
@@ -186,18 +202,6 @@ void checker3App::update() {
 	while(mOscListener.hasWaitingMessages()) {
 		osc::Message message;
 		mOscListener.getNextMessage( &message );
-//        		console() << "New message received" << std::endl;
-//        		console() << "Address: " << message.getAddress() << std::endl;
-//        		console() << "Num Arg: " << message.getNumArgs() << std::endl;
-		for	(int i = 0; i < message.getNumArgs(); i++ ) {
-            //			console() << "arg " << i << ": ";
-            //			console() << message.getArgTypeName(i) << " - ";
-			if (i<2) {
-                //				console() << message.getArgAsInt32(i) << "; ";
-			} else {
-                //				console() << message.getArgAsFloat(i) << "; ";
-			}
-		}
 		if(message.getAddress() == "/grid") {
 			oneGrid->oscMessage(message);
 		}
@@ -205,15 +209,36 @@ void checker3App::update() {
         if(message.getAddress() == "/setOutput" &&
            message.getNumArgs() == 1 &&
            message.getArgType(0) == osc::TYPE_STRING) {
+            console() << "output " <<message.getArgAsString(0) << endl;
             for (std::map<string,bool>::iterator it=playback.begin(); it!=playback.end(); ++it){
                 playback[it->first] = false;
             }
             playback[message.getArgAsString(0)] = true;
 //            playback = message.getArgAsString(0);
         }
+        
         // resetting video to 0
         if(message.getAddress() == "/video") {
             mMovie->seekToStart();
+        }
+        // set video
+        if(message.getAddress() == "/video" &&
+           message.getNumArgs() == 1 &&
+           message.getArgType(0) == osc::TYPE_STRING) {
+            string videofile = message.getArgAsString(0);
+            loadMovie(videofile);
+        }
+        
+        // syphon???
+        if(message.getAddress() == "/syphon" &&
+           message.getNumArgs() == 2 &&
+           message.getArgType(0) == osc::TYPE_STRING &&
+           message.getArgType(1) == osc::TYPE_STRING) {
+            mClientSyphon.setup();
+            string serverName = message.getArgAsString(0);
+            string appName = message.getArgAsString(1);
+            mClientSyphon.set(serverName, appName);
+            mClientSyphon.bind();
         }
 	}
     
@@ -225,8 +250,8 @@ void checker3App::update() {
 void checker3App::draw() {
     gl::enableAlphaBlending();
 	// clear out the window with black
-	gl::clear(Colorf(0.f, 0.f, 0.f) );
-    //    gl::clear(Color::white());
+//	gl::clear(Colorf(0.f, 0.f, 0.f) );
+    gl::clear(Color::black());
 	
 	// draws to fbo only
 	oneGrid->draw(Warp::isEditModeEnabled());
@@ -241,6 +266,19 @@ void checker3App::draw() {
             if(mMovie) {
                 warp->draw(mFrameTexture);
             }
+        } else if (playback["syphon"]) {
+            mSyphonFbo.bindFramebuffer();
+            Area viewport = gl::getViewport();
+            gl::setViewport(mSyphonFbo.getBounds() );
+            gl::pushMatrices();
+            gl::clear(Color::black());
+            gl::color(Color::white());
+            mClientSyphon.draw(0, 0, mSyphonFbo.getWidth(), mSyphonFbo.getHeight());
+            gl::popMatrices();
+            gl::setViewport(viewport);
+            mSyphonFbo.unbindFramebuffer();
+            gl::Texture tex = mSyphonFbo.getTexture();
+            warp->draw(tex);
         }
 	}
 	
@@ -339,7 +377,7 @@ void checker3App::accept() {
 		// a connection occurs, a session will be created and passed
 		// in through the onAccept method.
 		mServer->accept((uint16_t)oscListenerPort+100);
-		console() <<  "Listening on port: " << oscListenerPort + 1 << endl;
+		console() <<  "Listening on port: " << oscListenerPort << endl;
 	}
 }
 void checker3App::onAccept( UdpSessionRef session ) {
@@ -367,9 +405,12 @@ void checker3App::onRead( ci::Buffer buffer ) {
     if(buffer.getDataSize() > 8) {
         string response	= UdpSession::bufferToString(buffer);
         response = response.substr(0, 4);
+//        int offset = data[7];
+//        console() << offset << endl;
         if(response == "grid") {
             oneGrid->byteMessage(buffer);
         }
+        buffer.reset();
     }
     
 	// Continue reading.
@@ -380,7 +421,7 @@ void checker3App::onReadComplete() {
 //	console() << "Read complete" << endl;
     
 	// Continue reading new responses.
-	mSession->read(udpMtu);
+//	mSession->read(udpMtu);
 }
 void checker3App::onError( string err, size_t bytesTransferred ) {
 	string text = "Error";

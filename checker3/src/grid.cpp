@@ -140,10 +140,15 @@ void Grid::oscMessage(osc::Message msg) {
 }
 void Grid::byteMessage(cinder::Buffer buf) {
     uint8_t* data = reinterpret_cast<uint8_t*>(buf.getData());
+//    string response	= UdpSession::bufferToString(buf);
+//    response = response.substr(0, 4);
+//    console() << response << " ";
     int offset = (data[4] << 24) + (data[5] << 16) + (data[6] << 8) + data[7];
+//    console() << offset << endl;
     // clear tiles if new frame is being set
     for (int i = 8; i < buf.getDataSize(); i++) {
-        int clrNdx = offset + i / 3;
+        int clrNdx = int(offset/3) + (i-8) / 3;
+//        console() << offset << " " << i << " " << clrNdx << endl;
         if (tileColors.size() > clrNdx) {
             try {
                 float r = (int)data[i++] / 255.f;
