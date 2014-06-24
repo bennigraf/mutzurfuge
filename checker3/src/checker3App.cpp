@@ -158,7 +158,9 @@ void checker3App::setup() {
 //    mClientSyphon.set("chessboard", "chessBoard_2Debug");
     mClientSyphon.set("", "Simple Server");
     mClientSyphon.bind();
-    mSyphonFbo = gl::Fbo(1280, 800, GL_RGB);
+    ci::gl::Texture sTex = mClientSyphon.getTexture();
+    
+//    mSyphonFbo = gl::Fbo(sTex.getWidth(), sTex.getHeight(), GL_RGB);
 }
 void checker3App::loadMovie(string movieFile) {
     try {
@@ -239,6 +241,9 @@ void checker3App::update() {
             string appName = message.getArgAsString(1);
             mClientSyphon.set(serverName, appName);
             mClientSyphon.bind();
+//            Vec2i sySize = mClientSyphon.getSize();
+//            mSyphonFbo = gl::Fbo(sySize.x, sySize.y, GL_RGB);
+            
         }
 	}
     
@@ -267,17 +272,18 @@ void checker3App::draw() {
                 warp->draw(mFrameTexture);
             }
         } else if (playback["syphon"]) {
-            mSyphonFbo.bindFramebuffer();
-            Area viewport = gl::getViewport();
-            gl::setViewport(mSyphonFbo.getBounds() );
-            gl::pushMatrices();
-            gl::clear(Color::black());
-            gl::color(Color::white());
-            mClientSyphon.draw(0, 0, mSyphonFbo.getWidth(), mSyphonFbo.getHeight());
-            gl::popMatrices();
-            gl::setViewport(viewport);
-            mSyphonFbo.unbindFramebuffer();
-            gl::Texture tex = mSyphonFbo.getTexture();
+//            mSyphonFbo.bindFramebuffer();
+//            Area viewport = gl::getViewport();
+//            gl::setViewport(mSyphonFbo.getBounds() );
+//            gl::pushMatrices();
+//            gl::clear(Color::black());
+//            gl::color(Color::white());
+//            mClientSyphon.draw(0, 0);
+//            gl::popMatrices();
+//            gl::setViewport(viewport);
+//            mSyphonFbo.unbindFramebuffer();
+//            gl::Texture tex = mSyphonFbo.getTexture();
+            gl::Texture tex = mClientSyphon.getTexture();
             warp->draw(tex);
         }
 	}
