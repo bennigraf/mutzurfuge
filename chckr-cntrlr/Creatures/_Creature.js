@@ -44,6 +44,9 @@ Creature.prototype.spawn = function(race) {
 	// send spawn-message
 	this.world.oscSndr.send('/creature/spawn', this.uid, this.race);
 }
+Creature.prototype.setColor = function(_col) {
+	this.clr = _col;
+}
 Creature.prototype.setRace = function(_race) {
 	this.race = _race;
 	switch (this.race) {

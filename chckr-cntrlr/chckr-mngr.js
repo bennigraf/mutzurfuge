@@ -44,7 +44,7 @@ wrld.addGrid({
 	id: 286, // f5, connected to f7
 	size: [43, 17],
 	pos: [0, 0],
-	address: ["127.0.0.1", 6002],
+	address: ["127.0.0.1", 5102],
 	gravity: 'down',
 	transitions: [['top', [99]]]
 });

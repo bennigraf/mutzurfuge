@@ -1,6 +1,8 @@
 var osc = require('node-osc');
-var Grid = require('./Grid.js');
 var net = require('net');
+var Colr = require("tinycolor2");
+
+var Grid = require('./Grid.js');
 var Creature = require('./Creatures/_Creature.js');
 
 module.exports = World;
@@ -12,6 +14,7 @@ function World() {
 	this.creatures = new Array();
 	this.grids = new Array();
 	this.mode = "grid";
+	this.baseclr;
 	
 	this._gridsById;
 }
@@ -46,7 +49,7 @@ World.prototype.setOscServer = function(port, host) {
 	this.oscServer = new osc.Server(port, host);
 	
 	this.oscServer.on("message", function (msg, rinfo) {
-		console.log("got message", msg)
+		// console.log("got message", msg)
 		// dirty hack because oF needs to send bundles for some stupid reason...
 		if(msg[0] == '#bundle') {
 			msg = msg[2];
@@ -62,6 +65,9 @@ World.prototype.setOscServer = function(port, host) {
 			if(msg[1] != null) {
 				this.mode = msg[1]; // grid or mawi right now
 			}
+		}
+		if(msg[0] == '/baseclr') {
+			this.baseclr = new Colr({r: msg[1] * 255, g: msg[2] * 255, b: msg[3] * 255});
 		}
 	}.bind(this));
 }
@@ -104,7 +110,7 @@ World.prototype.setTcpServer = function(port, host) {
 			        data = null;
 			    }
 				console.log(data);
-				if(data) {
+				if(data && data.event == 'release') {
 					this.spawnCreature(data.id, data.x, data.y);
 				}
 			} else if (this.mode == "mawi") {
@@ -122,6 +128,9 @@ World.prototype.spawnCreature = function(boardid, x, y) { // x and y are 0..1 he
 	if(spwnCoords) {
 		c.spawn();
 		c.setRootCoords(spwnCoords[0], spwnCoords[1], spwnCoords[2]);
+		if(this.baseclr) {
+			c.setColor(this.baseclr);
+		}
 		this.creatures.push(c);
 	} else {
 		console.log("couldn't find point for creature");
@@ -230,7 +239,7 @@ World.prototype.tick = function() {
 	
 	var time2 = process.hrtime();
 	time2 = time2[0]+time2[1]/1000000000;
-	console.log(time2 - time);
+	// console.log(time2 - time);
 	
 	// console.log(this.grids[0].tiles[0][0]);
 }
