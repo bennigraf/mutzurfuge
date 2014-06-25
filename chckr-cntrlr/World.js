@@ -145,7 +145,7 @@ World.prototype.autoMode = function() {
 		if(!gridCreatureCounts[g.id]) {
 			gridCreatureCounts[g.id] = 0;
 		}
-		var spawnProp = (1 - Math.min(cpg, gridCreatureCounts[g.id]) / cpg) * 0.1; // 0.1 to 0
+		var spawnProp = (1 - Math.min(cpg, gridCreatureCounts[g.id]) / cpg) * 0.04; // 0.1 to 0
 		if(Math.random() < spawnProp) {
 			this.spawnCreature(g.id, Math.random(), Math.random());
 		}
