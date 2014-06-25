@@ -72,15 +72,15 @@ void ofApp::setup(){
     projectionSurfaces.push_back(psurf3);
     ProjectionSurface psurf4(528, "boardConfigurationF4.yml", ofVec2f(3.0, 1.7));
     projectionSurfaces.push_back(psurf4);
-    ProjectionSurface psurf5(691, "boardConfigurationF5.yml", ofVec2f(4.3, 1.7));
+    ProjectionSurface psurf5(286, "boardConfigurationF5.yml", ofVec2f(4.3, 1.7));
     projectionSurfaces.push_back(psurf5);
-    ProjectionSurface psurf6(268, "boardConfigurationF6.yml", ofVec2f(4.3, 1.7));
+    ProjectionSurface psurf6(484, "boardConfigurationF6.yml", ofVec2f(4.3, 1.7));
     projectionSurfaces.push_back(psurf6);
-    ProjectionSurface psurf7(581, "boardConfigurationF7.yml", ofVec2f(4.3, 3.95));
+    ProjectionSurface psurf7(99, "boardConfigurationF7.yml", ofVec2f(4.3, 3.95));
     projectionSurfaces.push_back(psurf7);
-    ProjectionSurface psurf8(761, "boardConfigurationF8.yml", ofVec2f(3.0, 1.7));
+    ProjectionSurface psurf8(222, "boardConfigurationF8.yml", ofVec2f(3.0, 1.7));
     projectionSurfaces.push_back(psurf8);
-    ProjectionSurface psurf9(528, "boardConfigurationF9.yml", ofVec2f(3.0, 1.7));
+    ProjectionSurface psurf9(903, "boardConfigurationF9.yml", ofVec2f(3.0, 1.7));
     projectionSurfaces.push_back(psurf9);
 
     for (int i = 0; i < projectionSurfaces.size(); i++) {
@@ -152,7 +152,7 @@ void ofApp::update(){
 		long deltaTime = ofGetElapsedTimeMillis() - connectTime;
 		if( deltaTime > 5000 ){
 			ofLog(OF_LOG_WARNING, "trying to connect to tcp");
-			tcpClient.setup("10.0.1.13", 12333);
+			tcpClient.setup("10.0.0.1", 12333);
 			connectTime = ofGetElapsedTimeMillis();
 		}
 	}
@@ -311,7 +311,7 @@ void ofApp::touchDown(int x, int y, int id){
     }
 
     if(foundPlane) {
-    	ofxAndroidVibrator::vibrate(50);
+    	ofxAndroidVibrator::vibrate(45);
         ofxOscMessage m;
 		m.setAddress("/hit");
 		m.addIntArg(psurfid);
@@ -324,6 +324,7 @@ void ofApp::touchDown(int x, int y, int id){
 		root["x"] = pc.x;
 		root["y"] = pc.y;
 		root["id"] = psurfid;
+		root["event"] = "press";
 		ofLog(OF_LOG_WARNING, "hit " + ofToString(psurfid) + " " + ofToString(pc));
 		Json::FastWriter jwrite;
 //		ofLog(OF_LOG_WARNING, jwrite.write(root));
@@ -340,7 +341,77 @@ void ofApp::touchMoved(int x, int y, int id){
 
 //--------------------------------------------------------------
 void ofApp::touchUp(int x, int y, int id){
+	if(ofGetElapsedTimef() - lastAutofocus > 15) {
+		((ofxAndroidVideoGrabber*)grabber.getGrabber().get())->setAutoFocus(true);
+		lastAutofocus = ofGetElapsedTimef();
+	}
+    hitmapFbo.readToPixels(hitmapPixels);
+    ofLog(OF_LOG_WARNING, "Event!");
 
+    // scale clicks to fbo size
+//    int fbox = (int)(x / (float)ofGetWidth() * grabber.getWidth());
+	int fbox = (int)((x - drawOffset.x) / (float)drawSize.x * grabber.getWidth());
+
+    // fbo is being stored upside down...
+    // there's also this weird scaling thing, I need to draw the fbo twice the size...?
+//    int fboy = grabber.getHeight() - (int)(y / 2.f / (float)ofGetHeight() * grabber.getHeight());
+	int fboy = grabber.getHeight() - (int)((y - drawOffset.y) / (float)drawSize.y * grabber.getHeight());
+
+    ofColor c = hitmapPixels.getColor(fbox, fboy);
+    ofVec2f pc(0.f, 0.f);
+    bool foundPlane = false;
+    int psurfid = -1;
+    // cout << hitmapPlaneToBoard[0] << " " << hitmapPlaneToBoard[1] << " " << hitmapPlaneToBoard[2] << endl;
+    ofLog(OF_LOG_WARNING, "event" + ofToString(x) + " " + ofToString(y));
+    ofLog(OF_LOG_WARNING, "fbo-pos " + ofToString(fbox) + " " + ofToString(fboy));
+    ofLog(OF_LOG_WARNING, "Color " + ofToString(c));
+    if(c.r > 0 && c.g > 0 && c.b == 0) {
+        // plane 0
+        ProjectionSurface psurf = projectionSurfaces[hitmapPlaneToBoard[0]];
+        psurfid = psurf.id;
+        pc.x = c.r / 255.f;
+        pc.y = c.g / 255.f;
+        foundPlane = true;
+    }
+    if(c.r == 0 && c.g > 0 && c.b > 0) {
+        // plane 1
+        ProjectionSurface psurf = projectionSurfaces[hitmapPlaneToBoard[1]];
+        psurfid = psurf.id;
+        pc.x = c.g / 255.f;
+        pc.y = c.b / 255.f;
+        foundPlane = true;
+    }
+    if(c.r > 0 && c.g == 0 && c.b > 0) {
+        // plane 2
+        ProjectionSurface psurf = projectionSurfaces[hitmapPlaneToBoard[2]];
+        psurfid = psurf.id;
+        pc.x = c.b / 255.f;
+        pc.y = c.r / 255.f;
+        foundPlane = true;
+    }
+
+    if(foundPlane) {
+        ofxOscMessage m;
+		m.setAddress("/hit");
+		m.addIntArg(psurfid);
+		m.addFloatArg(pc.x);
+		m.addFloatArg(pc.y);
+//		oscSender.sendMessage(m);
+//        cout << "sending osc message" << endl;
+//        cout << "/hit" << " " << psurfid << " " << pc.x << " " << pc.y << endl;
+		Json::Value root;
+		root["x"] = pc.x;
+		root["y"] = pc.y;
+		root["id"] = psurfid;
+		root["event"] = "release";
+		ofLog(OF_LOG_WARNING, "hit " + ofToString(psurfid) + " " + ofToString(pc));
+		Json::FastWriter jwrite;
+//		ofLog(OF_LOG_WARNING, jwrite.write(root));
+		tcpClient.sendRaw(jwrite.write(root));
+    }
+    std::stringstream msg;
+    msg << "osc: " << psurfid << ", " << pc;
+    debugMsgStr = msg.str(); // returns std::string object
 }
 
 //--------------------------------------------------------------
