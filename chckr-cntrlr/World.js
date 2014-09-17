@@ -18,6 +18,7 @@ function World() {
 	
 	this._gridsById;
 }
+
 World.prototype.addGrid = function(gridobj) {
 	var g = new Grid(gridobj.id, gridobj.size[0], gridobj.size[1], gridobj.pos[0], gridobj.pos[1]);
 	g.setAddress(gridobj.address[0], gridobj.address[1]);
@@ -49,7 +50,7 @@ World.prototype.setOscServer = function(port, host) {
 	this.oscServer = new osc.Server(port, host);
 	
 	this.oscServer.on("message", function (msg, rinfo) {
-		// console.log("got message", msg)
+		console.log("got osc message", msg)
 		// dirty hack because oF needs to send bundles for some stupid reason...
 		if(msg[0] == '#bundle') {
 			msg = msg[2];
@@ -64,6 +65,7 @@ World.prototype.setOscServer = function(port, host) {
 		if(msg[0] == '/mode') {
 			if(msg[1] != null) {
 				this.mode = msg[1]; // grid or mawi right now
+				console.log("setting mode to ", msg[1]);
 			}
 		}
 		if(msg[0] == '/baseclr') {
@@ -85,10 +87,10 @@ World.prototype.setTcpServer = function(port, host) {
 	server.listen(port, host);
 	// console.log('Server listening on ' + server.address().address +':'+ server.address().port);
 	var masocks = [];
-	var mawiaddrs = ["10.0.0.10", "10.0.0.11", "10.0.0.12", "10.0.0.13", "10.0.0.14", "10.0.0.15", "10.0.0.16", "10.0.0.17", "10.0.0.18", "10.0.0.19"];
+	var mawiaddrs = ["127.0.0.1", "10.0.0.10", "10.0.0.11", "10.0.0.12", "10.0.0.13", "10.0.0.14", "10.0.0.15", "10.0.0.16", "10.0.0.17", "10.0.0.18", "10.0.0.19"];
 	
 	server.on('connection', function(sock) {
-	    console.log('CONNECTED: ' + sock.remoteAddress +':'+ sock.remotePort);
+    console.log('CONNECTED: ' + sock.remoteAddress +':'+ sock.remotePort);
 		for(i in mawiaddrs) {
 			if(sock.remoteAddress == mawiaddrs[i]) {
 				masocks.push(sock);
@@ -99,16 +101,17 @@ World.prototype.setTcpServer = function(port, host) {
 			console.log(e);
 		});
 		sock.on('data', function(data) {
+			var rawdata = data;
 			if(this.mode == "grid") {
 				try {
 					data = data.toString(); // convert from buffer to string
 					data = data.replace(/\[\/TCP\]/g, "");
 					data = data.replace(/\\n/g, "");
 					data = JSON.parse(data);
-			    } catch (ex) {
+		    	} catch (ex) {
 					console.log(ex);
-			        data = null;
-			    }
+	        		data = null;
+		    	}
 				console.log(data);
 				if(data && data.event == 'release') {
 					this.spawnCreature(data.id, data.x, data.y);
@@ -116,7 +119,7 @@ World.prototype.setTcpServer = function(port, host) {
 			} else if (this.mode == "mawi") {
 				for(i in masocks) {
 					console.log("sending on to mawi");
-					masocks[i].write(data);
+					masocks[i].write(rawdata);
 				}
 			}
 		}.bind(this));
@@ -183,6 +186,7 @@ World.prototype.tick = function() {
 	
 	
 	var toDie = new Array();
+	// console.log(this.creatures.length);
 	for (var i = 0; i < this.creatures.length; i++) {
 		this.creatures[i].tick();
 		if(!this.creatures[i].alive) {

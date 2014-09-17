@@ -1,4 +1,4 @@
-var Colr = require("tinycolor2");
+var Colr = require('tinycolor2');
 var Vec2D = require('vector2d');
 var Twn = require('shifty');
 

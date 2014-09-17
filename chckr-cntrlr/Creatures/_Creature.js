@@ -2,8 +2,8 @@ var Colr = require("tinycolor2");
 var uuid = require('node-uuid');
 var LilQuad = require("./lilquad.js");
 var Rectr = require("./rectr.js");
-
-var RACES = ['lilquad', 'rectr'];
+var Spreadr = require("./spreadr.js");
+var RACES = ['lilquad', 'rectr', 'spreadr'];
 
 /*
 A Creature has a certain race (aka type) that defines it's behaviour and shape etc.
@@ -34,6 +34,7 @@ Creature.prototype.spawn = function(race) {
 	if(!race) {
 		var ndx = Math.floor(Math.random() * RACES.length);
 		race = RACES[ndx];
+		// race = "spreadr";
 	}
 	this.setRace(race);
 	// do race-specific stuff
@@ -55,6 +56,9 @@ Creature.prototype.setRace = function(_race) {
 		break;
 	case "rectr":
 		this.cr = new Rectr(this);
+		break;
+	case "spreadr":
+		this.cr = new Spreadr(this);
 		break;
 	default:
 		break;

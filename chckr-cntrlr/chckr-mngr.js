@@ -14,45 +14,102 @@ wrld.setTcpServer(12333, '0.0.0.0');
 // each grid has one or more transitions to other grids; 
 // and obviously a size and an address
 // and a gravity would be nice
-wrld.addGrid({
-	id: 484, // f6
+wrld.addGrid({ // f0
+	id: 691,
 	size: [43, 17],
 	pos: [0, 0],
-	address: ["10.0.0.2", 5100],
+	address: ["10.0.0.10", 5100],
 	gravity: 'down',
-	transitions: [['bottom', [99]]]
+	transitions: [['top', [581]]]
 });
-wrld.addGrid({
-	id: 99, // f7
+// balkon vorne oben
+wrld.addGrid({ // f1
+	id: 268,
+	size: [43, 17],
+	pos: [0, 0],
+	address: ["10.0.0.11", 5100],
+	gravity: 'down',
+	transitions: [['bottom', [581]]]
+});
+wrld.addGrid({ // f2
+	id: 581,
 	size: [43, 40],
-	// size: [43, 27],
+	pos: [0, 0],
+	address: ["10.0.0.12", 5100],
+	gravity: 'down',
+	transitions: [['bottom', [761]], ['top', [268, 691]]] // connection also to f0
+});
+wrld.addGrid({ // f3
+	id: 761,
+	size: [30, 17],
+	pos: [0, 0],
+	address: ["10.0.0.13", 5100],
+	gravity: 'down',
+	transitions: [['top', [581, 286]]] // also to middle part
+});
+
+// mitte unten
+wrld.addGrid({ // f4
+	id: 528,
+	size: [30, 17],
+	pos: [0, 0],
+	address: ["10.0.0.14", 5100],
+	gravity: 'down',
+	transitions: [['top', [484]]] // to f6/balkon hinten oben seite
+});
+wrld.addGrid({ // f5
+	id: 286,
+	size: [30, 17],
+	pos: [0, 0],
+	address: ["10.0.0.15", 5100],
+	gravity: 'down',
+	transitions: [['top', [761]]] // to f3/balkon oben seite
+});
+
+// balkon oben hinten
+wrld.addGrid({ // f6
+	id: 484,
+	size: [43, 17],
+	pos: [0, 0],
+	address: ["10.0.0.16", 5100],
+	gravity: 'down',
+	transitions: [['bottom', [99, 528]]] // back down to middle/f4
+});
+wrld.addGrid({ // f7
+	id: 99,
+	size: [43, 40],
 	pos: [0, 0],
 	address: ["10.0.0.17", 5100],
-	gravity: 'none',
-	transitions: [['top', [484, 286]], ['bottom', [222]]] // also connected to f9
+	gravity: 'down',
+	transitions: [['bottom', [222, 903]], ['top', [484]]] // also to f9
 });
-// this one is "upside down"
-wrld.addGrid({
-	id: 222, // f8
+wrld.addGrid({ // f8
+	id: 222,
 	size: [43, 17],
 	pos: [0, 0],
-	address: ["10.0.0.3", 5000],
-	gravity: 'up',
-	transitions: [['top', [99]]]
-});
-wrld.addGrid({
-	id: 286, // f5, connected to f7
-	size: [43, 17],
-	pos: [0, 0],
-	address: ["127.0.0.1", 5102],
+	address: ["10.0.0.18", 5100],
 	gravity: 'down',
 	transitions: [['top', [99]]]
 });
+
+// hinten außen
+wrld.addGrid({ // f9
+	id: 903,
+	size: [43, 17],
+	pos: [0, 0],
+	address: ["10.0.0.19", 5100],
+	gravity: 'down',
+	transitions: [['bottom', [99]]] // back to f7/balkon oben
+});
+
+
 
 // runs the world! How epic!
 wrld.run();
 
-wrld.spawnCreature(99, Math.random(),Math.random());
+wrld.mode = "mawi";
+
+wrld.spawnCreature(286, Math.random(), Math.random());
 // wrld.spawnCreature(99, Math.random(), Math.random());
 // wrld.spawnCreature(99, Math.random(), Math.random());
 // wrld.spawnCreature(99, Math.random(), Math.random());
