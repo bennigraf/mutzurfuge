@@ -100,8 +100,12 @@ World.prototype.setTcpServer = function(port, host) {
 		sock.on('error', function(e) {
 			console.log(e);
 		});
+		sock.on('close', function() {
+			console.log('closed', sock._peername);
+		})
 		sock.on('data', function(data) {
 			var rawdata = data;
+			// console.log(this.mode);
 			if(this.mode == "grid") {
 				try {
 					data = data.toString(); // convert from buffer to string

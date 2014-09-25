@@ -16,7 +16,8 @@ wrld.setTcpServer(12333, '0.0.0.0');
 // and a gravity would be nice
 wrld.addGrid({ // f0
 	id: 691,
-	size: [43, 17],
+	// size: [43, 17],
+	size: [24, 16],
 	pos: [0, 0],
 	address: ["10.0.0.10", 5100],
 	gravity: 'down',
@@ -25,7 +26,8 @@ wrld.addGrid({ // f0
 // balkon vorne oben
 wrld.addGrid({ // f1
 	id: 268,
-	size: [43, 17],
+	// size: [43, 17],
+	size: [24, 16],
 	pos: [0, 0],
 	address: ["10.0.0.11", 5100],
 	gravity: 'down',
@@ -33,7 +35,8 @@ wrld.addGrid({ // f1
 });
 wrld.addGrid({ // f2
 	id: 581,
-	size: [43, 40],
+	// size: [43, 40],
+	size: [24, 16],
 	pos: [0, 0],
 	address: ["10.0.0.12", 5100],
 	gravity: 'down',
@@ -41,9 +44,10 @@ wrld.addGrid({ // f2
 });
 wrld.addGrid({ // f3
 	id: 761,
-	size: [30, 17],
+	// size: [30, 17],
+	size: [24, 16],
 	pos: [0, 0],
-	address: ["10.0.0.13", 5100],
+	address: ["10.0.0.12", 5101],
 	gravity: 'down',
 	transitions: [['top', [581, 286]]] // also to middle part
 });
@@ -51,17 +55,19 @@ wrld.addGrid({ // f3
 // mitte unten
 wrld.addGrid({ // f4
 	id: 528,
-	size: [30, 17],
+	// size: [30, 17],
+	size: [24, 16],
 	pos: [0, 0],
-	address: ["10.0.0.14", 5100],
+	address: ["10.0.0.12", 5102],
 	gravity: 'down',
 	transitions: [['top', [484]]] // to f6/balkon hinten oben seite
 });
 wrld.addGrid({ // f5
 	id: 286,
-	size: [30, 17],
+	// size: [30, 17],
+	size: [24, 16],
 	pos: [0, 0],
-	address: ["10.0.0.15", 5100],
+	address: ["10.0.0.13", 5100],
 	gravity: 'down',
 	transitions: [['top', [761]]] // to f3/balkon oben seite
 });
@@ -69,25 +75,28 @@ wrld.addGrid({ // f5
 // balkon oben hinten
 wrld.addGrid({ // f6
 	id: 484,
-	size: [43, 17],
+	// size: [43, 17],
+	size: [24, 16],
 	pos: [0, 0],
-	address: ["10.0.0.16", 5100],
+	address: ["10.0.0.14", 5100],
 	gravity: 'down',
 	transitions: [['bottom', [99, 528]]] // back down to middle/f4
 });
 wrld.addGrid({ // f7
 	id: 99,
-	size: [43, 40],
+	// size: [43, 40],
+	size: [24, 16],
 	pos: [0, 0],
-	address: ["10.0.0.17", 5100],
+	address: ["10.0.0.14", 5101],
 	gravity: 'down',
 	transitions: [['bottom', [222, 903]], ['top', [484]]] // also to f9
 });
 wrld.addGrid({ // f8
 	id: 222,
-	size: [43, 17],
+	// size: [43, 17],
+	size: [24, 16],
 	pos: [0, 0],
-	address: ["10.0.0.18", 5100],
+	address: ["10.0.0.14", 5102],
 	gravity: 'down',
 	transitions: [['top', [99]]]
 });
@@ -95,9 +104,10 @@ wrld.addGrid({ // f8
 // hinten außen
 wrld.addGrid({ // f9
 	id: 903,
-	size: [43, 17],
+	// size: [43, 17],
+	size: [24, 16],
 	pos: [0, 0],
-	address: ["10.0.0.19", 5100],
+	address: ["10.0.0.15", 5100],
 	gravity: 'down',
 	transitions: [['bottom', [99]]] // back to f7/balkon oben
 });
@@ -107,13 +117,42 @@ wrld.addGrid({ // f9
 // runs the world! How epic!
 wrld.run();
 
-wrld.mode = "mawi";
+// wrld.mode = "mawi";
 
 wrld.spawnCreature(286, Math.random(), Math.random());
-// wrld.spawnCreature(99, Math.random(), Math.random());
-// wrld.spawnCreature(99, Math.random(), Math.random());
-// wrld.spawnCreature(99, Math.random(), Math.random());
-// wrld.spawnCreature(99, Math.random(), Math.random());
+wrld.spawnCreature(691, Math.random(), Math.random());
+wrld.spawnCreature(581, Math.random(), Math.random());
+wrld.spawnCreature(761, Math.random(), Math.random());
+wrld.spawnCreature(528, Math.random(), Math.random());
+wrld.spawnCreature(286, Math.random(), Math.random());
+wrld.spawnCreature(484, Math.random(), Math.random());
+wrld.spawnCreature(99, Math.random(), Math.random());
+wrld.spawnCreature(222, Math.random(), Math.random());
+wrld.spawnCreature(903, Math.random(), Math.random());
+
+
+wrld.spawnCreature(286, Math.random(), Math.random());
+wrld.spawnCreature(691, Math.random(), Math.random());
+wrld.spawnCreature(581, Math.random(), Math.random());
+wrld.spawnCreature(761, Math.random(), Math.random());
+wrld.spawnCreature(528, Math.random(), Math.random());
+wrld.spawnCreature(286, Math.random(), Math.random());
+wrld.spawnCreature(484, Math.random(), Math.random());
+wrld.spawnCreature(99, Math.random(), Math.random());
+wrld.spawnCreature(222, Math.random(), Math.random());
+wrld.spawnCreature(903, Math.random(), Math.random());
+
+
+wrld.spawnCreature(286, Math.random(), Math.random());
+wrld.spawnCreature(691, Math.random(), Math.random());
+wrld.spawnCreature(581, Math.random(), Math.random());
+wrld.spawnCreature(761, Math.random(), Math.random());
+wrld.spawnCreature(528, Math.random(), Math.random());
+wrld.spawnCreature(286, Math.random(), Math.random());
+wrld.spawnCreature(484, Math.random(), Math.random());
+wrld.spawnCreature(99, Math.random(), Math.random());
+wrld.spawnCreature(222, Math.random(), Math.random());
+wrld.spawnCreature(903, Math.random(), Math.random());
 
 ////////////////////////// now:
 // Creatures are 'blind', they don't see the whole world and what's going on it.
