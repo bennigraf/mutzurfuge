@@ -87,7 +87,7 @@ World.prototype.setTcpServer = function(port, host) {
 	server.listen(port, host);
 	// console.log('Server listening on ' + server.address().address +':'+ server.address().port);
 	var masocks = [];
-	var mawiaddrs = ["127.0.0.1", "10.0.0.10", "10.0.0.11", "10.0.0.12", "10.0.0.13", "10.0.0.14", "10.0.0.15", "10.0.0.16", "10.0.0.17", "10.0.0.18", "10.0.0.19"];
+	var mawiaddrs = ["127.0.0.1", "10.0.0.10", "10.0.0.11", "10.0.0.12", "10.0.0.13", "10.0.0.14", "10.0.0.15", "10.0.0.16", "10.0.0.17", "10.0.0.18", "10.0.0.19", "169.254.102.35", "169.254.94.222"];
 	
 	server.on('connection', function(sock) {
     console.log('CONNECTED: ' + sock.remoteAddress +':'+ sock.remotePort);
@@ -118,7 +118,8 @@ World.prototype.setTcpServer = function(port, host) {
 				}
 			} else if (this.mode == "mawi") {
 				for(i in masocks) {
-					console.log("sending on to mawi");
+					//console.log("sending on to mawi");
+					console.log(data.toString());
 					masocks[i].write(rawdata);
 				}
 			}
