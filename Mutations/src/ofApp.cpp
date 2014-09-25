@@ -113,13 +113,13 @@ void ofApp::setupDrawStuff() {
 }
 void ofApp::setupHitmapImages() {
 // prepare 3 detection images for now, maybe improve this later (by using only half the colors or something, should be enough anyways...)
-	// prepare 6 detection images
+	// prepare 3 detection images
     for (int i = 0; i < 3; i++) {
         ofImage img;
         img.allocate(128, 128, OF_IMAGE_COLOR); // size must be pow2, but that's exactly half of 8bit color which is nice
         hitmapImgs.push_back(img);
     }
-    // sorry, need to do this 6 times as well, don't know how to generalize
+    // sorry, need to do this 3 times as well, don't know how to generalize
     for (int y = 0; y < 128; y++) {
         for (int x = 0; x < 128; x++) {
             ofColor c(0, 0, 0);
@@ -148,11 +148,11 @@ void ofApp::setupHitmapImages() {
 //--------------------------------------------------------------
 void ofApp::update(){
 	if(!tcpClient.isConnected()) {
-		//if we are not connected lets try and reconnect every 5 seconds
+		//if we are not connected lets try and reconnect every 3 seconds
 		long deltaTime = ofGetElapsedTimeMillis() - connectTime;
-		if( deltaTime > 5000 ){
+		if( deltaTime > 3000 ){
 			ofLog(OF_LOG_WARNING, "trying to connect to tcp");
-			tcpClient.setup("10.0.0.1", 12333);
+			tcpClient.setup("10.0.0.5", 12333);
 			connectTime = ofGetElapsedTimeMillis();
 		}
 	}
@@ -312,11 +312,11 @@ void ofApp::touchDown(int x, int y, int id){
 
     if(foundPlane) {
     	ofxAndroidVibrator::vibrate(45);
-        ofxOscMessage m;
-		m.setAddress("/hit");
-		m.addIntArg(psurfid);
-		m.addFloatArg(pc.x);
-		m.addFloatArg(pc.y);
+//        ofxOscMessage m;
+//		m.setAddress("/hit");
+//		m.addIntArg(psurfid);
+//		m.addFloatArg(pc.x);
+//		m.addFloatArg(pc.y);
 //		oscSender.sendMessage(m);
 //        cout << "sending osc message" << endl;
 //        cout << "/hit" << " " << psurfid << " " << pc.x << " " << pc.y << endl;
@@ -391,11 +391,11 @@ void ofApp::touchUp(int x, int y, int id){
     }
 
     if(foundPlane) {
-        ofxOscMessage m;
-		m.setAddress("/hit");
-		m.addIntArg(psurfid);
-		m.addFloatArg(pc.x);
-		m.addFloatArg(pc.y);
+//      ofxOscMessage m;
+//		m.setAddress("/hit");
+//		m.addIntArg(psurfid);
+//		m.addFloatArg(pc.x);
+//		m.addFloatArg(pc.y);
 //		oscSender.sendMessage(m);
 //        cout << "sending osc message" << endl;
 //        cout << "/hit" << " " << psurfid << " " << pc.x << " " << pc.y << endl;

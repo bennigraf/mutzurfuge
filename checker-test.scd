@@ -1,5 +1,7 @@
 n = NetAddr("127.0.0.1", 5000)
 
+n.sendMsg('/syphon', 'F2', 'Mutation_080Debug')
+n.sendMsg('/setOutput', 'syphon');
 
 n.sendMsg('/grid', 1, 1, 1.0.rand,1.0.rand,1.0.rand)
 n.sendMsg('/grid', 1, 5, 0.0,1.0,0.0)
