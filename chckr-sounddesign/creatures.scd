@@ -30,6 +30,7 @@ SynthDef(\rectr, {
 
 
 	snd = snd * EnvGen.ar(Env.asr(0, 1, 0.5), \alive.ar(1), doneAction: 2);
+	snd = snd * -8.dbamp;
 
 	panenv1 = EnvGen.ar(Env.linen(0.8, 1/20, 0.8), Trig1.ar(\pantrig0.tr(0), 0.1));
 	panenv2 = EnvGen.ar(Env.linen(0.8, 1/20, 0.8), Trig1.ar(\pantrig1.tr(0), 0.1));
@@ -68,7 +69,7 @@ SynthDef(\lilquad, {
 
 	snd = MulAdd(snd, -8.dbamp) + (revsnd * \raysum.kr(0).linexp(0, 1, -55, 0).dbamp.lag(2));
 
-	snd = snd * -6.dbamp;
+	snd = snd * 2.dbamp;
 
 	snd = snd * EnvGen.ar(Env.asr(0, 1, 0.5), \alive.ar(1), doneAction: 2);
 
@@ -83,10 +84,10 @@ SynthDef(\lilquad, {
 	pannedout3 = PanX.ar(4, snd, \panpos2.kr(0).lag(1), panenv3);
 	pannedout4 = PanX.ar(4, snd, \panpos3.kr(0).lag(1), panenv4);
 
-	Out.ar(0, [pannedout1.sum + pannedout2.sum, pannedout3.sum + pannedout4.sum]);
-	// Out.ar(0, pannedout1 * -6.dbamp);
-	// Out.ar(0, pannedout2 * -6.dbamp);
-	// Out.ar(0, pannedout3 * -6.dbamp);
-	// Out.ar(0, pannedout4 * -6.dbamp);
+	// Out.ar(0, [pannedout1.sum + pannedout2.sum, pannedout3.sum + pannedout4.sum]);
+	Out.ar(0, pannedout1 * -6.dbamp);
+	Out.ar(0, pannedout2 * -6.dbamp);
+	Out.ar(0, pannedout3 * -6.dbamp);
+	Out.ar(0, pannedout4 * -6.dbamp);
 }).add;
 )

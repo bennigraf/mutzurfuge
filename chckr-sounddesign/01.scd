@@ -1,8 +1,9 @@
-s.options.device_(ServerOptions.devices[4]);
+s.options.device_(ServerOptions.devices[3]);
 s.options.memSize_(s.options.memSize * 32)
 s.boot
+s.quit
 s.scope
-s.latency_(1.2)
+s.latency_(0.5)
 
 (
 x.free;
@@ -16,9 +17,9 @@ x = {
 	snd = BPF.ar(snd, 1382 + {TRand.ar(0, 9283, ticktrig)}!2, 0.3);
 	snd = HPF.ar(snd, (17000 - (action * 13000)), (-12 * (1-action)).dbamp);
 
-	snd = snd * nv;
+	snd = snd * nv * 4.dbamp;
 
-	snd = snd + GVerb.ar(snd, 23, 3.8, 0.53, mul: -7.dbamp).sum;
+	snd = snd + GVerb.ar(snd, 23, 3.8, 0.53, mul: 3.dbamp).sum;
 }.play
 );
 
