@@ -148,7 +148,7 @@ void checker3App::setup() {
     gui->addParam("Grid", &playback["grid"], true, 1);
     gui->addParam("Video", &playback["video"], false, 1);
     gui->addParam("Syphon", &playback["syphon"], false, 1);
-	gui->load(CONFIG_FILE);
+	gui->load(string(getAssetPath("").native()) + string("/") + string(CONFIG_FILE));
     
     loadMovie("anna.mov");
     
@@ -168,11 +168,11 @@ void checker3App::loadMovie(string movieFile) {
         mMovie->setLoop();
         mMovie->play();
     } catch( ... ) {
-        console() << "Couldn't load move file!" << endl;
+        console() << "Couldn't load movie file!" << endl;
     }
 }
 bool checker3App::loadState(MouseEvent event) {
-	gui->load(CONFIG_FILE);
+	gui->load(string(getAssetPath("").native()) + string("/") + string(CONFIG_FILE));
 	fs::path settings = getAssetPath("") / "warps.xml";
 	if( fs::exists( settings ) ) {
 		mWarps = Warp::readSettings(loadFile(settings));
@@ -181,7 +181,7 @@ bool checker3App::loadState(MouseEvent event) {
 	return true;
 }
 bool checker3App::saveState(MouseEvent event) {
-	gui->save(CONFIG_FILE);
+	gui->save(string(getAssetPath("").native()) + string("/") + string(CONFIG_FILE));
 	fs::path settings = getAssetPath("") / "warps.xml";
 	Warp::writeSettings( mWarps, writeFile( settings ) );
 	return true;
