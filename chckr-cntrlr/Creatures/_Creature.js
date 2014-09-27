@@ -18,7 +18,7 @@ function Creature(env) {
 	this.tiles = [];
 	this.uid = uuid.v1();
 	// render tiles are what's represented to the outside world, inside we deal with tiles
-	// renderTiles are created on each tick and may contain more tiles that this.tiles
+	// renderTiles are created on each tick and may contain more tiles than this.tiles
 	this.renderTiles = []; 
 }
 
@@ -150,7 +150,7 @@ Creature.prototype.tick = function() {
 	for(ndx in this.tiles) {
 		this.tiles[ndx][1] += 1; // age of tile
 	}
-		
+	
 	// remove very old tiles
 	for(ndx in this.tiles) {
 		if(this.tiles[ndx][1] > 20) {

@@ -3,7 +3,8 @@ var net = require('net');
 var Colr = require("tinycolor2");
 
 var Grid = require('./Grid.js');
-var Creature = require('./Creatures/_Creature.js');
+// var Creature = require('./Creatures/_Creature.js');
+var Creature = require('./Creatures/_ProcCreature.js');
 
 module.exports = World;
 
@@ -17,10 +18,12 @@ function World() {
 	this.baseclr;
 	
 	this._gridsById;
+	
+	this.worldmapCache = { };
 }
 
 World.prototype.addGrid = function(gridobj) {
-	var g = new Grid(gridobj.id, gridobj.size[0], gridobj.size[1], gridobj.pos[0], gridobj.pos[1]);
+	var g = new Grid(gridobj.id, gridobj.size[0], gridobj.size[1]);
 	g.setAddress(gridobj.address[0], gridobj.address[1]);
 	if(gridobj.gravity) {
 		g.setGravity(gridobj.gravity);
@@ -35,6 +38,7 @@ World.prototype.addGrid = function(gridobj) {
 			// g.addTransition(gridobj.transitions[i][0], gridobj.transitions[i][1]);
 		}
 	}
+	g.setMarkerPos(gridobj.markerpos);
 	this.grids.push(g);
 	this._updateGridMeta();
 }
@@ -132,10 +136,13 @@ World.prototype.setTcpServer = function(port, host) {
 }
 World.prototype.spawnCreature = function(boardid, x, y) { // x and y are 0..1 here
 	var c = new Creature(this);
-	var spwnCoords = this.findGridCoords(boardid, x, y);
+	// var spwnCoords = this.findGridCoords(boardid, x, y);
+	var spwnCoords = this.findGridCoords(268, x, y);
 	if(spwnCoords) {
-		c.spawn();
-		c.setRootCoords(spwnCoords[0], spwnCoords[1], spwnCoords[2]);
+		// c.spawn();
+		// c.setRootCoords(spwnCoords[0], spwnCoords[1], spwnCoords[2]);
+		c.spawn(null, [spwnCoords[0], spwnCoords[1], spwnCoords[2]]); // spawn takes race and rootcoords
+		// c.spawn('rectr', [spwnCoords[0], spwnCoords[1], spwnCoords[2]]); // spawn takes race and rootcoords
 		if(this.baseclr) {
 			c.setColor(this.baseclr);
 		}
@@ -144,8 +151,8 @@ World.prototype.spawnCreature = function(boardid, x, y) { // x and y are 0..1 he
 		console.log("couldn't find point for creature");
 	}
 }
-World.prototype.autoMode = function() {
-	var cpg = 3; // max creatures per grid
+World.prototype.autoMode = function(cpg) {
+	cpg = cpg || 3; // max creatures per grid
 	// counts creatures per grid
 	// if there are less than 3 creatures per grid, maybe spawn one
 	// creatures have limited life spans, so they die anyways
@@ -162,9 +169,10 @@ World.prototype.autoMode = function() {
 		if(!gridCreatureCounts[g.id]) {
 			gridCreatureCounts[g.id] = 0;
 		}
-		var spawnProp = (1 - Math.min(cpg, gridCreatureCounts[g.id]) / cpg) * 0.04; // 0.1 to 0
+		var spawnProp = (1 - Math.min(cpg, gridCreatureCounts[g.id]) / cpg) * 0.02; // 0.1 to 0
 		if(Math.random() < spawnProp) {
 			this.spawnCreature(g.id, Math.random(), Math.random());
+			// console.log("spawing on", g.id);
 		}
 	}
 }
@@ -177,78 +185,62 @@ World.prototype.setTile = function(x, y, r, g, b) {
 	};
 }
 World.prototype.tick = function() {
-	// this.autoMode();
+	this.autoMode(2);
 	
 	var time = process.hrtime();
 	time = time[0]+time[1]/1000000000;
-	// update creatures, remove dead ones
-	// console.log("tick");
 	
 	// tell sound-part it's ticking
 	if(this.oscSndr) {
 		this.oscSndr.send('/world', 'tick');
 	}
 	
+	// update creatures, remove dead ones
 	
-	var toDie = new Array();
-	// console.log(this.creatures.length);
-	for (var i = 0; i < this.creatures.length; i++) {
+	for (var i = this.creatures.length - 1; i >= 0; i--){
 		this.creatures[i].tick();
 		if(!this.creatures[i].alive) {
-			toDie.push(i);
+			this.creatures.splice(i, 1);
 		}
-	}
-	// reverse to not mess up indizes before deletion
-	// (assumes that the values of toDie are sorted ascending)
-	// to be sure, sort first, see http://de.selfhtml.org/javascript/objekte/array.htm#sort
-	var numsort = function (a, b) { return a - b; };
-	if(toDie.length > 0) {
-		toDie.sort(numsort);
-		for (var i = toDie.length - 1; i >= 0; i--) {
-			var creatureIndex = toDie[i];
-			this.creatures.splice(creatureIndex, 1);
-		}
-	}
+	};
 	
 	var time2 = process.hrtime();
 	time2 = time2[0]+time2[1]/1000000000;
-	// console.log(time2 - time);
+	// console.log("creatures:", time2 - time);
+	time = time2;
 	
 	// clear grids, make them all white
 	for(i in this.grids) {
 		this.grids[i].clearTiles();
 	}
-	
-	// "draw" stuff - get renderTiles from each creature, write it into tiles of grids, tell grids to send data
+
+	// draw stuff to grids... get worldmappedTiles from each creature which are
+	// indexed by gridids already, send those to the grids
 	for(i in this.creatures) {
-		if(this.creatures[i].alive) {
-			rts = this.creatures[i].renderTiles;
-			for(ndx in rts) {
-				if(this.creatures[i].worldMap[ndx]) {
-					var wmtiles = this.creatures[i].worldMap[ndx];
-					for(j in wmtiles) {
-						var wmtile = wmtiles[j];
-						var g = this.findGridById(wmtile[0]);
-						g.setTile([wmtile[1], wmtile[2]], rts[ndx]);
-					}
-				}
+		var c = this.creatures[i];
+		if(c.alive) {
+			for(gid in c.worldmappedTiles) {
+				this.findGridById(gid).setTiles(c.worldmappedTiles[gid]);
 			}
 		}
 	}
+	
 	var time2 = process.hrtime();
 	time2 = time2[0]+time2[1]/1000000000;
-	// console.log(time2 - time);
+	// console.log("creatures to grids:", time2 - time);
+	time = time2;
 	
+	// send data to grids
 	for (var i = 0; i < this.grids.length; i++) {
 		// get the amout of action going on ont the grid
 		var nsum = this.grids[i].getNormalizedSum();
 		this.oscSndr.send('/grid/action', this.grids[i].id, nsum);
-		this.grids[i].sendData();
+		// this.grids[i].sendData();
 	}
 	
 	var time2 = process.hrtime();
 	time2 = time2[0]+time2[1]/1000000000;
-	// console.log(time2 - time);
+	// console.log("sending data:", time2 - time);
 	
 	// console.log(this.grids[0].tiles[0][0]);
 }
@@ -355,9 +347,8 @@ World.prototype.run = function() {
 	this.interval = setInterval(function() {
 		this.tick();
 	}.bind(this), 50);
-	
 }
-// World.prototype.stop = function() {
-// 	clearInterval(this.interval);
-// 	this.clearTiles();
-// }
+World.prototype.stop = function() {
+	clearInterval(this.interval);
+	this.clearTiles();
+}

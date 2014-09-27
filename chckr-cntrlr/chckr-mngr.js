@@ -14,22 +14,23 @@ wrld.setTcpServer(12333, '0.0.0.0');
 // each grid has one or more transitions to other grids; 
 // and obviously a size and an address
 // and a gravity would be nice
+// /*
 wrld.addGrid({ // f0
 	id: 691,
 	// size: [43, 17],
 	size: [24, 16],
-	pos: [0, 0],
+	markerpos: 'tl',
 	address: ["10.0.0.10", 5100],
 	gravity: 'down',
 	transitions: [['top', [581]]]
 });
-// balkon vorne oben
 wrld.addGrid({ // f1
 	id: 268,
-	// size: [43, 17],
-	size: [24, 16],
-	pos: [0, 0],
-	address: ["10.0.0.11", 5100],
+	size: [43, 17],
+	// size: [24, 16],
+	markerpos: 'tr',
+	// address: ["10.0.0.11", 5100],
+	address: ['127.0.0.1', 5100],
 	gravity: 'down',
 	transitions: [['bottom', [581]]]
 });
@@ -37,7 +38,7 @@ wrld.addGrid({ // f2
 	id: 581,
 	// size: [43, 40],
 	size: [24, 16],
-	pos: [0, 0],
+	markerpos: 'tr',
 	address: ["10.0.0.12", 5100],
 	gravity: 'down',
 	transitions: [['bottom', [761]], ['top', [268, 691]]] // connection also to f0
@@ -46,7 +47,7 @@ wrld.addGrid({ // f3
 	id: 761,
 	// size: [30, 17],
 	size: [24, 16],
-	pos: [0, 0],
+	markerpos: 'tl',
 	address: ["10.0.0.12", 5101],
 	gravity: 'down',
 	transitions: [['top', [581, 286]]] // also to middle part
@@ -57,7 +58,7 @@ wrld.addGrid({ // f4
 	id: 528,
 	// size: [30, 17],
 	size: [24, 16],
-	pos: [0, 0],
+	markerpos: 'tr',
 	address: ["10.0.0.12", 5102],
 	gravity: 'down',
 	transitions: [['top', [484]]] // to f6/balkon hinten oben seite
@@ -66,7 +67,7 @@ wrld.addGrid({ // f5
 	id: 286,
 	// size: [30, 17],
 	size: [24, 16],
-	pos: [0, 0],
+	markerpos: 'tl',
 	address: ["10.0.0.13", 5100],
 	gravity: 'down',
 	transitions: [['top', [761]]] // to f3/balkon oben seite
@@ -77,7 +78,7 @@ wrld.addGrid({ // f6
 	id: 484,
 	// size: [43, 17],
 	size: [24, 16],
-	pos: [0, 0],
+	markerpos: 'tr',
 	address: ["10.0.0.14", 5100],
 	gravity: 'down',
 	transitions: [['bottom', [99, 528]]] // back down to middle/f4
@@ -86,7 +87,7 @@ wrld.addGrid({ // f7
 	id: 99,
 	// size: [43, 40],
 	size: [24, 16],
-	pos: [0, 0],
+	markerpos: 'tr',
 	address: ["10.0.0.14", 5101],
 	gravity: 'down',
 	transitions: [['bottom', [222, 903]], ['top', [484]]] // also to f9
@@ -95,7 +96,7 @@ wrld.addGrid({ // f8
 	id: 222,
 	// size: [43, 17],
 	size: [24, 16],
-	pos: [0, 0],
+	markerpos: 'tl',
 	address: ["10.0.0.14", 5102],
 	gravity: 'down',
 	transitions: [['top', [99]]]
@@ -106,53 +107,88 @@ wrld.addGrid({ // f9
 	id: 903,
 	// size: [43, 17],
 	size: [24, 16],
-	pos: [0, 0],
+	markerpos: 'tr',
 	address: ["10.0.0.15", 5100],
 	gravity: 'down',
 	transitions: [['bottom', [99]]] // back to f7/balkon oben
 });
+// */
+/*
+wrld.addGrid({ // f0
+	id: 691,
+	size: [43, 17],
+	markerpos: 'tl',
+	address: ["127.0.0.1", 5100],
+	gravity: 'down',
+	transitions: [['right', [268]], ['bottom', [581]]]
+});
+wrld.addGrid({ // f1
+	id: 268,
+	size: [43, 17],
+	markerpos: 'tr',
+	address: ['127.0.0.1', 5101],
+	gravity: 'down',
+	transitions: [['left', [691]], ['bottom', [761]]]
+});
+wrld.addGrid({ // f2
+	id: 581,
+	size: [43, 40],
+	markerpos: 'tr',
+	address: ["127.0.0.1", 5102],
+	gravity: 'down',
+	transitions: [['right', [761]], ['top', [691]]] // connection also to f0
+});
+wrld.addGrid({ // f3
+	id: 761,
+	size: [30, 17],
+	markerpos: 'tl',
+	address: ["127.0.0.1", 5103],
+	gravity: 'down',
+	transitions: [['left', [761]], ['top', [268]]] // also to middle part
+});
 
-
+// */
 
 // runs the world! How epic!
 wrld.run();
 
 // wrld.mode = "mawi";
 
-wrld.spawnCreature(286, Math.random(), Math.random());
-wrld.spawnCreature(691, Math.random(), Math.random());
-wrld.spawnCreature(581, Math.random(), Math.random());
-wrld.spawnCreature(761, Math.random(), Math.random());
-wrld.spawnCreature(528, Math.random(), Math.random());
-wrld.spawnCreature(286, Math.random(), Math.random());
-wrld.spawnCreature(484, Math.random(), Math.random());
-wrld.spawnCreature(99, Math.random(), Math.random());
-wrld.spawnCreature(222, Math.random(), Math.random());
-wrld.spawnCreature(903, Math.random(), Math.random());
+wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
+// wrld.spawnCreature(268, Math.random(), Math.random());
 
-
-wrld.spawnCreature(286, Math.random(), Math.random());
-wrld.spawnCreature(691, Math.random(), Math.random());
-wrld.spawnCreature(581, Math.random(), Math.random());
-wrld.spawnCreature(761, Math.random(), Math.random());
-wrld.spawnCreature(528, Math.random(), Math.random());
-wrld.spawnCreature(286, Math.random(), Math.random());
-wrld.spawnCreature(484, Math.random(), Math.random());
-wrld.spawnCreature(99, Math.random(), Math.random());
-wrld.spawnCreature(222, Math.random(), Math.random());
-wrld.spawnCreature(903, Math.random(), Math.random());
-
-
-wrld.spawnCreature(286, Math.random(), Math.random());
-wrld.spawnCreature(691, Math.random(), Math.random());
-wrld.spawnCreature(581, Math.random(), Math.random());
-wrld.spawnCreature(761, Math.random(), Math.random());
-wrld.spawnCreature(528, Math.random(), Math.random());
-wrld.spawnCreature(286, Math.random(), Math.random());
-wrld.spawnCreature(484, Math.random(), Math.random());
-wrld.spawnCreature(99, Math.random(), Math.random());
-wrld.spawnCreature(222, Math.random(), Math.random());
-wrld.spawnCreature(903, Math.random(), Math.random());
+// wrld.spawnCreature(691, Math.random(), Math.random());
+// wrld.spawnCreature(581, Math.random(), Math.random());
+// wrld.spawnCreature(761, Math.random(), Math.random());
+// wrld.spawnCreature(528, Math.random(), Math.random());
+// wrld.spawnCreature(286, Math.random(), Math.random());
+// wrld.spawnCreature(484 , Math.random(), Math.random());
+// wrld.spawnCreature(99, Math.random(), Math.random());
+// wrld.spawnCreature(222, Math.random(), Math.random());
+// wrld.spawnCreature(903, Math.random(), Math.random());
 
 ////////////////////////// now:
 // Creatures are 'blind', they don't see the whole world and what's going on it.

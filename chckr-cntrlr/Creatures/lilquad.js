@@ -40,10 +40,10 @@ LilQuad.prototype.tick = function() {
 	this.m.setTile(newTile);
 	
 	if(offstepProp) {
-		this.m.world.oscSndr.send('/creature/setValue', this.m.uid, 'offstep', 1);
+		this.m.osc.send('/creature/setValue', this.m.uid, 'offstep', 1);
 	}
 	
-	this.m.world.oscSndr.send('/creature/setValue', this.m.uid, 'raysum', this.rays.length);
+	this.m.osc.send('/creature/setValue', this.m.uid, 'raysum', this.rays.length);
 	
 	// add ray from time to time
 	if(this.rayProp > Math.random() && this.diedAt == 0) {
@@ -61,16 +61,28 @@ LilQuad.prototype.tick = function() {
 	
 	// maybe die if older than 33 and no rays are active TODO: fade out somehow
 	if(this.m.age > 33 && this.rays.length == 0 && this.diedAt == 0) {
+		// console.log("dying");
 		var dyingprop = (this.m.age - 33) / 300;
+		// console.log(dyingprop);
 		if(Math.random() < dyingprop) {
-			// this.m.alive = false;
 			this.diedAt = this.m.age;
 			this.amp.tween({
 				from: {s: 1},
 				to: {s: 0},
-				duration: 338
+				duration: 338,
+				// finish: function() { this.m.alive = false;console.log("dead"); }.bind(this)
 			});
 		}
+	}
+	if(this.m.age > 500) {
+		// console.log("dying");
+		this.diedAt = this.m.age;
+		this.amp.tween({
+			from: {s: 1},
+			to: {s: 0},
+			duration: 2338,
+			// finish: function() { this.m.alive = false; console.log("dead"); }.bind(this)
+		});
 	}
 	if(this.diedAt > 0 && this.m.age - this.diedAt > 33) {
 		this.m.alive = false;
@@ -108,7 +120,7 @@ LilQuad.prototype.tick = function() {
 	
 	////// draw stuff from here
 	var white = new Colr({r: 255, g: 255, b: 255});
-	this.m.renderTiles = new Array();
+	this.m.renderTiles = { };
 	for(ndx in this.m.tiles) {
 		var t = this.m.tiles[ndx];
 		var c = Colr.lighten(this.m.clr, 5 * t[1]);
@@ -135,5 +147,4 @@ LilQuad.prototype.tick = function() {
 			}
 		}
 	}
-	
 };

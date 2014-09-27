@@ -74,7 +74,7 @@ Rectr.prototype.tick = function() {
 			this.rotationSpeed = (0.1 + Math.random()) * (Math.round(Math.random()) * 2 - 1);
 
 			if(this.m.age - this.lastHitSend > 5) {
-				this.m.world.oscSndr.send('/creature/setValue', this.m.uid, 'wallhit', 1);
+				this.m.osc.send('/creature/setValue', this.m.uid, 'wallhit', 1);
 				this.lastHitSend = this.m.age;
 			}
 		}
@@ -90,11 +90,11 @@ Rectr.prototype.tick = function() {
 	}
 	
 	this.rotation = this.rotation + 0.15 * this.rotationSpeed;
-	this.m.world.oscSndr.send('/creature/setValue', this.m.uid, 'rotation', this.rotation);
+	this.m.osc.send('/creature/setValue', this.m.uid, 'rotation', this.rotation);
 	var speed = this.movement.length();
 	speed = (speed - 1.41421) / 1.41421; // scale to 0..1
-	this.m.world.oscSndr.send('/creature/setValue', this.m.uid, 'speed', speed);
-	this.m.world.oscSndr.send('/creature/setValue', this.m.uid, 'size', this.size/25 * this.dispSize.get()['s']);
+	this.m.osc.send('/creature/setValue', this.m.uid, 'speed', speed);
+	this.m.osc.send('/creature/setValue', this.m.uid, 'size', this.size/25 * this.dispSize.get()['s']);
 	
 	
 	if(this.m.age > 55 && this.diedAt == 0) {
@@ -106,12 +106,13 @@ Rectr.prototype.tick = function() {
 			this.dispSize.tween({
 				from: {s: 1},
 				to: {s: 4},
-				duration: 493
+				duration: 493,
 			});
 			this.amp.tween({
 				from: {s: 1},
 				to: {s: 0},
-				duration: 493
+				duration: 493,
+				// finish: function() { this.m.alive = false }.bind(this)
 			});
 		}
 	}
@@ -119,10 +120,13 @@ Rectr.prototype.tick = function() {
 	if(this.diedAt > 0 && this.m.age - this.diedAt > 50) {
 		this.m.alive = false;
 	};
+	if(this.amp.get()['s'] == 0) {
+		this.m.alive = false;
+	}
 	
 	
 	////// draw stuff from here
-	this.m.renderTiles = new Array();
+	this.m.renderTiles = { };
 
 	var white = new Colr({r: 255, g: 255, b: 255});
 	for(ndx in this.traceTiles) {

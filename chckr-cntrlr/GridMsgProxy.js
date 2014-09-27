@@ -1,3 +1,7 @@
+// SEEMS DEPRECATED!!!! Don't remember when I used that, but now
+//// I'm sending direct udp in Grid.js...
+
+
 ///// this receives udp messages on lo and converts them to old-fashioned osc messages
 // need this to make one thread per grid client because generating osc messages is slowwwww
 // and implementing and udb client in the grid client is a little awkward

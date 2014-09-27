@@ -25,6 +25,10 @@ Spreadr.prototype.spawn = function() {
 	}
 	
 	this.tiles = [];
+	
+	// 'global' amp
+	this.amp = new Twn();
+	this.amp.set({s: 1});
 }
 
 Spreadr.prototype.tick = function() {
@@ -54,23 +58,37 @@ Spreadr.prototype.tick = function() {
 	
 	if(this.heads.length == 0 && this.diedAt == 0) {
 		this.diedAt = this.m.age;
+		this.amp.tween({
+			from: {s: 1},
+			to: {s: 0},
+			duration: 2493
+		});
 	}
-	// this.m.world.oscSndr.send('/creature/setValue', this.m.uid, 'speed', speed);
+	// this.m.osc.send('/creature/setValue', this.m.uid, 'speed', speed);
 	
 	// finally die
-	if(this.diedAt > 0 && this.m.age - this.diedAt > 39) {
+	if(this.diedAt > 0 && this.m.age - this.diedAt > 60) {
 		this.m.alive = false;
 	};
+	if(this.amp.get()['s'] == 0) {
+		this.m.alive = false;
+	}
 	
+	// console.log(this.m.race, this.m.age, this.diedAt, this.m.alive, this.amp.get()['s']);
 	
 	////// draw stuff from here
-	this.m.renderTiles = new Array();
+	this.m.renderTiles = { };
 
 	var white = new Colr({r: 255, g: 255, b: 255});
+	var amp = this.amp.get()['s'];
 	for(ndx in this.tiles) {
 		if(this.tiles[ndx] < 12) {
-			var fact = 1 - (1/11 * this.tiles[ndx]);
-			this.m.renderTiles[ndx] = Colr.mix(white, this.m.clr, 10 + fact * 90);
+			var fact = 1 - (1/11 * this.tiles[ndx] * amp);
+			// console.log(amp);
+			// amp = 1;
+			this.m.renderTiles[ndx] = Colr.mix(white, this.m.clr, amp*(Math.random() * 10 + fact * 90));
+			// this.m.renderTiles[ndx] = Colr.mix(white, this.m.clr, amp * 100);
+			
 		}
 	}
 	for(i in this.heads) {
