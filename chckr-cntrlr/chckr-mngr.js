@@ -9,7 +9,6 @@ var World = require('./World.js');
 var wrld = new World();
 wrld.setOscServer(12332, '0.0.0.0');
 wrld.setOscClient(57120, '0.0.0.0');
-wrld.setTcpServer(12333, '0.0.0.0');
 
 // each grid has one or more transitions to other grids; 
 // and obviously a size and an address
