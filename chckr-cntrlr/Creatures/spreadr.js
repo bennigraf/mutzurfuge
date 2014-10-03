@@ -24,7 +24,7 @@ Spreadr.prototype.spawn = function() {
 		this.fillers.splice(3 - i, 1);
 	}
 	
-	this.tiles = [];
+	this.tiles = { };
 	
 	// 'global' amp
 	this.amp = new Twn();
@@ -34,7 +34,11 @@ Spreadr.prototype.spawn = function() {
 Spreadr.prototype.tick = function() {
 	
 	for(ndx in this.tiles) {
-		this.tiles[ndx] += 1;
+		if(this.tiles[ndx] >= 0 && this.tiles[ndx] < 14) {
+			this.tiles[ndx] += 1;
+		} else {
+			delete this.tiles[ndx];
+		}
 	}
 	
 	var newHeads = [];
@@ -88,7 +92,6 @@ Spreadr.prototype.tick = function() {
 			// amp = 1;
 			this.m.renderTiles[ndx] = Colr.mix(white, this.m.clr, amp*(Math.random() * 10 + fact * 90));
 			// this.m.renderTiles[ndx] = Colr.mix(white, this.m.clr, amp * 100);
-			
 		}
 	}
 	for(i in this.heads) {

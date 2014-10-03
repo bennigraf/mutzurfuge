@@ -21,9 +21,16 @@ LilQuad.prototype.spawn = function() {
 	this.amp.set({s: 1});
 }
 
+LilQuad.prototype.oscMessage = function(m) {
+	// hit
+	if(m == 11) {
+		this.rayProp = 1;
+	}
+}
+
 LilQuad.prototype.tick = function() {
 	
-	this.rayProp += 0.001;
+	// this.rayProp += 0.001;
 	
 	// 'head' wanders around in a rect, but sometimes jumps a little off
 	var steps = [[1.0, 0], [0, 1.0], [-1.0, 0], [0, -1.0]];
@@ -46,8 +53,7 @@ LilQuad.prototype.tick = function() {
 	this.m.osc.send('/creature/setValue', this.m.uid, 'raysum', this.rays.length);
 	
 	// add ray from time to time
-	if(this.rayProp > Math.random() && this.diedAt == 0) {
-	// if(false) {
+	if(this.rayProp > 0) {
 		this.rayProp = 0;
 		var ray = {
 			age: 0,

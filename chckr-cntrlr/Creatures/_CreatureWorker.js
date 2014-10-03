@@ -1,9 +1,10 @@
 var Colr = require("tinycolor2");
 var uuid = require('node-uuid');
+
 var LilQuad = require("./lilquad.js");
 var Rectr = require("./rectr.js");
 var Spreadr = require("./spreadr.js");
-var RACES = ['lilquad', 'rectr', 'spreadr'];
+var Bassdr01 = require("./bassdr01.js");
 
 var osc = require('node-osc');
 
@@ -39,6 +40,11 @@ process.on('message', function worker_message(m, handle){
 	}
 	if(m[0] == 'osc') {
 		w.osc = new osc.Client(m[1], m[2]);
+	}
+	if(m[0] == 'oscMsg') {
+		if(w.cr) {
+			w.cr.oscMessage(m[1]);
+		}
 	}
 });
 
@@ -83,6 +89,9 @@ Worker.prototype.setRace = function(_race) {
 	case "spreadr":
 		this.cr = new Spreadr(this);
 		break;
+	case "bassdr01":
+		this.cr = new Bassdr01(this);
+		break;
 	default:
 		break;
 	}
@@ -109,14 +118,16 @@ Worker.prototype.tick = function() {
 		}
 	}
 	
-	// this.renderTiles = new Array();
-	// console.log(this.cr);
+	// tick creature and draw stuff
 	this.cr.tick();
-	if(this.age > 100 && this.age % 10 == 0) {
-		// console.log(this.age, this.race);
-		
-		
-	}
+	
+	// for each renderTile, look up on worldmap which grid tiles are affected
+	// and on what grid, then set those to "gridTiles" or something and send those
+	// instead. This makes the world process way lighter...
+	// also send simplified color object (only rgba), since ipc doesn't allow sending
+	// actual objects anyways...
+	process.send(['worldmappedTiles', this.worldmapiator()]);
+	
 	
 	// kill creature after it's own tick
 	// actually end the process and send the message upstream...
@@ -132,20 +143,8 @@ Worker.prototype.tick = function() {
 	var headStr = this.head[0] + "." + this.head[1];
 	// set multiple positions!!
 	for(i in this.worldMap[headStr]) {
-		// this.world.oscSndr.send('/creature/setOutGrid', this.uid, i, this.worldMap[headStr][i][0]);
 		this.osc.send('/creature/setOutGrid', this.uid, i, this.worldMap[headStr][i][0]);
 	}
-	
-	// for each renderTile, look up on worldmap which grid tiles are affected
-	// and on what grid, then set those to "gridTiles" or something and send those
-	// instead. This makes the world process way lighter...
-	// also send simplified color object (only rgba), since ipc doesn't allow sending
-	// actual objects anyways...
-	process.send(['worldmappedTiles', this.worldmapiator()]);
-	
-	// console.log(this.race);
-	// console.log(this.renderTiles);
-	// process.send(["renderTiles", this.renderTiles]);
 };
 
 // take the rendertiles { '13.2': Colr } and create a new array, indexed by 
@@ -199,5 +198,5 @@ Worker.prototype.run = function() {
 	this.interval = setInterval(function() {
 		this.tick();
 		// console.log('gwtick')
-	}.bind(this), 50);
+	}.bind(this), 66);
 }

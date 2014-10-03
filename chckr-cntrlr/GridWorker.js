@@ -46,6 +46,8 @@ function GridWorker(id, w, h) {
 	this._markerpos = 'tl';
 	
 	this.interval = null; // interval to auto-run itself (and send own data)
+	
+	this.tilesWereSet = false; // only send data if this is true
 }
 
 GridWorker.prototype.spawn = function() {
@@ -79,6 +81,7 @@ GridWorker.prototype.clearTiles = function() {
 			this.tiles[x][y] = new Colr({ r: 255, g: 255, b: 255 });
 		}
 	}
+	this.tilesWereSet = false;
 }
 
 // borrowed from https://github.com/bhollis/aruco-marker/blob/master/aruco-marker.js
@@ -112,8 +115,6 @@ GridWorker.prototype.setTile = function(pos, col) {
 	var newc;
 	col = new Colr(col);
 	if(!Colr.equals(c, white)) {
-		// newc = Colr({r: Math.min(c._r , col._r) , g: Math.min(c._g , col._g) , b: Math.min(c._b , col._b) });
-		// newc = Colr({r: c._r/255 * col._r, g: c._g/255 * col._g, b: c._b/255 * col._b, })
 		newc = Colr.mix(c, col, 50);
 	} else {
 		newc = col;
@@ -124,6 +125,7 @@ GridWorker.prototype.setTiles = function(tiles) {
 	for(i in tiles) {
 		this.setTile([tiles[i][0], tiles[i][1]], tiles[i][2]);
 	}
+	this.tilesWereSet = true;
 }
 
 GridWorker.prototype.sendData = function() {
@@ -166,7 +168,7 @@ GridWorker.prototype.sendData = function() {
 	}
 
 	// clear tiles before next run
-	// this.clearTiles();
+	this.clearTiles();
 }
 
 GridWorker.prototype.drawMarker = function() {
@@ -202,7 +204,8 @@ GridWorker.prototype.drawMarker = function() {
 
 GridWorker.prototype.run = function() {
 	this.interval = setInterval(function() {
-		this.sendData();
-		// console.log('gwtick')
-	}.bind(this), 50);
+		if(this.tilesWereSet) {
+			this.sendData();
+		}
+	}.bind(this), 66);
 }

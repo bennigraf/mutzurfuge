@@ -1,5 +1,12 @@
 var osc = require('node-osc');
 var net = require('net');
+
+var redis = require("redis"); // used for caching worldmaps
+var rClient = redis.createClient({max_attempts: 1}); 
+rClient.on('error', function(e) {
+	console.log(e);
+});
+
 var Colr = require("tinycolor2");
 
 var Grid = require('./Grid.js');
@@ -22,6 +29,27 @@ function World() {
 	this.worldmapCache = { };
 }
 
+World.prototype.worldmapFromCache = function(key, cb) {
+	if(rClient.connected) {
+		rClient.get(key, function(e, wm) {
+			if(wm) {
+				cb(wm);
+			} else {
+				cb(false);
+			}
+		});
+	} else {
+		cb(false);
+	}
+}
+World.prototype.worldmapToCache = function(key, worldmap) {
+	if(rClient.connected) {
+		rClient.set(key, worldmap, function() {
+			console.log("wrote worldmap to cache for ", key);
+		});
+	}
+}
+
 World.prototype.addGrid = function(gridobj) {
 	var g = new Grid(gridobj.id, gridobj.size[0], gridobj.size[1]);
 	g.setAddress(gridobj.address[0], gridobj.address[1]);
@@ -32,10 +60,8 @@ World.prototype.addGrid = function(gridobj) {
 		for (var i = 0; i < gridobj.transitions.length; i++) {
 			var dir = gridobj.transitions[i][0] // dir
 			for(j in gridobj.transitions[i][1]) {
-				// console.log(dir, gridobj.transitions[i][1][j]);
 				g.addTransition(dir, gridobj.transitions[i][1][j]);
 			}
-			// g.addTransition(gridobj.transitions[i][0], gridobj.transitions[i][1]);
 		}
 	}
 	g.setMarkerPos(gridobj.markerpos);
@@ -54,7 +80,7 @@ World.prototype.setOscServer = function(port, host) {
 	this.oscServer = new osc.Server(port, host);
 	
 	this.oscServer.on("message", function (msg, rinfo) {
-		console.log("got osc message", msg)
+		// console.log("got osc message", msg);
 		// dirty hack because oF needs to send bundles for some stupid reason...
 		if(msg[0] == '#bundle') {
 			msg = msg[2];
@@ -74,6 +100,13 @@ World.prototype.setOscServer = function(port, host) {
 		}
 		if(msg[0] == '/baseclr') {
 			this.baseclr = new Colr({r: msg[1] * 255, g: msg[2] * 255, b: msg[3] * 255});
+		}
+		if(msg[0] == '/fromCreature') {
+			for(i in this.creatures) {
+				if(this.creatures[i].uid == msg[1]) {
+					this.creatures[i].oscMessage(msg[2]);
+				}
+			}
 		}
 	}.bind(this));
 }
@@ -136,13 +169,13 @@ World.prototype.setTcpServer = function(port, host) {
 }
 World.prototype.spawnCreature = function(boardid, x, y) { // x and y are 0..1 here
 	var c = new Creature(this);
-	// var spwnCoords = this.findGridCoords(boardid, x, y);
-	var spwnCoords = this.findGridCoords(268, x, y);
+	var spwnCoords = this.findGridCoords(boardid, x, y);
+	// var spwnCoords = this.findGridCoords(268, x, y);
 	if(spwnCoords) {
 		// c.spawn();
 		// c.setRootCoords(spwnCoords[0], spwnCoords[1], spwnCoords[2]);
 		c.spawn(null, [spwnCoords[0], spwnCoords[1], spwnCoords[2]]); // spawn takes race and rootcoords
-		// c.spawn('rectr', [spwnCoords[0], spwnCoords[1], spwnCoords[2]]); // spawn takes race and rootcoords
+		// c.spawn('bassdr01', [spwnCoords[0], spwnCoords[1], spwnCoords[2]]); // spawn takes race and rootcoords
 		if(this.baseclr) {
 			c.setColor(this.baseclr);
 		}
@@ -185,14 +218,14 @@ World.prototype.setTile = function(x, y, r, g, b) {
 	};
 }
 World.prototype.tick = function() {
-	this.autoMode(2);
+	this.autoMode(1);
 	
 	var time = process.hrtime();
 	time = time[0]+time[1]/1000000000;
 	
 	// tell sound-part it's ticking
 	if(this.oscSndr) {
-		this.oscSndr.send('/world', 'tick');
+		this.oscSndr.send('/world/tick', 'tick');
 	}
 	
 	// update creatures, remove dead ones
@@ -346,7 +379,7 @@ World.prototype.findGridById = function(id) {
 World.prototype.run = function() {
 	this.interval = setInterval(function() {
 		this.tick();
-	}.bind(this), 50);
+	}.bind(this), 66);
 }
 World.prototype.stop = function() {
 	clearInterval(this.interval);

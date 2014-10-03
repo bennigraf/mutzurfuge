@@ -22,13 +22,10 @@ function Grid(id, w, h) {
 	this.tempTiles = [];
 	
 	this._markerpos = 'tl';
-	
-	// this.marker = this.makeMarkerFromId();
-	
+		
 	this.transitions = []; // a transition is ['direction', boardid]
 	this._transitionsBySide = { 'top': false, 'left': false, 'bottom': false, 'right': false};
-	// console.log(this.marker);
-	// console.log(twn);
+
 	this.v = 0.3;
 	
 	this.wrkr = cp.fork('GridWorker.js', [this.id, this.width, this.height]);
@@ -116,7 +113,6 @@ Grid.prototype.setTile = function(posx, posy, col) {
 	this.tempTiles.push([posx, posy, col]);
 }
 Grid.prototype.setTiles = function(tiles) {
-	// console.log(tiles);
 	this.wrkr.send(['setTiles', tiles]);
 	
 	this.bad_memory_leak_restart_hack();
@@ -124,9 +120,7 @@ Grid.prototype.setTiles = function(tiles) {
 // takes tiles as they are and sends them bulk wise to worker
 // DEPRECATED
 Grid.prototype.tilesSet = function() {
-	// console.log(this.tempTiles);
 	this.wrkr.send(['setTiles', this.tempTiles]);
-	// this.wrkr.stdin.write(JSON.stringify(this.tempTiles));
 	this.tempTiles = [ ];
 }
 Grid.prototype.sendData = function() {
@@ -142,18 +136,8 @@ Grid.prototype.getNormalizedSum = function() {
 			sum += this.tiles[x][y]._r + this.tiles[x][y]._g + this.tiles[x][y]._b;
 		}
 	}
-	// console.log(sum);
 	return 1 - sum / (this.width * this.height * 3 * 255);
 }
-/*
-Grid.prototype.setTile = function(x, y, r, g, b) {
-	var ln = 0.000000001;
-	// console.log(this.oscSndr);
-	if(this.oscSndr) {
-		this.oscSndr.send('/grid', x-this.offsetx, y-this.offsety, r+ln, g+ln, b+ln); // ln makes sure floats are being sent
-	}
-}
-*/
 
 // there is somewhere a memory leak, I assume in the worker... so I just restart
 // the worker every couple of minutes to avoid that. ......
@@ -171,6 +155,7 @@ Grid.prototype.bad_memory_leak_restart_hack = function() {
 				this.wrkr = cp.fork('GridWorker.js', [this.id, this.width, this.height]);
 				this.wrkr.send(['spawn']);
 				this.wrkr.send(['host', this._address, this._port]);
+				this.wrkr.send(['markerpos', this._markerpos]);
 			
 				this.lastRestart = process.uptime();
 			}
