@@ -1,4 +1,46 @@
 (
+SynthDef(\bassdr01, {
+	var snd, del, x;
+
+	var stream = [
+		In.kr(~div_buses[4]),
+		PulseDivider.kr(In.kr(~div_buses[8]), 4, 2),
+		PulseDivider.kr(In.kr(~div_buses[8]), 3, 2),
+		PulseDivider.kr(In.kr(~div_buses[4]), 3, 2),
+		PulseDivider.kr(In.kr(~div_buses[8]), 5, 4)
+	];
+	var trig = TChoose.kr(1, stream);
+
+	var dfacts = [[3, 5], [3, 3], [5, 8], [1, 2], [0.25, 2]];
+	var tme = In.kr(~div_buses['tempo']).reciprocal * 2;
+
+	var nv = EnvGen.kr(Env.perc(0.01, 0.21), trig);
+	var note = TChoose.kr(In.kr(~div_buses[1]), [-3, -2, 0, 4]);
+
+	snd = LPF.ar(Saw.ar((32+note).midicps), 60);
+	snd = snd + LPF.ar(BrownNoise.ar(-12.dbamp), 88);
+	snd = snd * nv;
+	snd = (snd * 13.dbamp).softclip * -6.dbamp;
+
+	dfacts = TChoose.kr(1, dfacts);
+	del = RHPF.ar(CombC.ar(snd, 3, tme * dfacts[0], dfacts[1], 1), 230 + SinOsc.kr(1/18).range(-30, 100), 0.8);
+
+	snd = snd + del;
+
+	SendReply.kr(trig, '/fromCreature', [13]);
+	x = {
+		var fft = FFT(LocalBuf(512), del);
+		var onset = Onsets.kr(fft, 0.3);
+		SendReply.kr(onset, '/fromCreature', [14]);
+	}.value();
+
+	snd = snd * EnvGen.ar(Env.asr(0, 1, 2.5), \alive.ar(1), doneAction: 2);
+	Out.ar(0, snd!2);
+}).add;
+);
+s.volume.volume = 0
+
+(
 SynthDef(\rectr, {
 	var snd, cmbsnd;
 	var panenv1, panenv2, panenv3, panenv4;
@@ -54,7 +96,7 @@ SynthDef(\rectr, {
 
 (
 SynthDef(\lilquad, {
-	var snd, revsnd;
+	var snd, revsnd, x;
 	var panenv1, panenv2, panenv3, panenv4;
 	var pannedout1, pannedout2, pannedout3, pannedout4;
 
@@ -69,9 +111,17 @@ SynthDef(\lilquad, {
 
 	snd = MulAdd(snd, -8.dbamp) + (revsnd * \raysum.kr(0).linexp(0, 1, -55, 0).dbamp.lag(2));
 
-	snd = snd * 2.dbamp;
+	snd = snd * -24.dbamp;
 
 	snd = snd * EnvGen.ar(Env.asr(0, 1, 0.5), \alive.ar(1), doneAction: 2);
+
+	x = {
+		// this starts a ray
+		var rayTrig = In.kr(~div_buses[16]);
+		rayTrig = Trig1.kr(Dust.kr(Rand(1, 5.5)), 1/4) * rayTrig;
+		SendReply.kr(rayTrig, '/fromCreature', [11]);
+		Out.kr(13, rayTrig);
+	}.value();
 
 	// Out.ar(0, snd);
 
