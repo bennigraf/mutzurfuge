@@ -5,7 +5,6 @@
 [32, 16, 8, 4, 2, 1, 0.5, 'tempo'].collect({|d|
 	~div_buses[d] = Bus.control(s, 1);
 });
-~div_buses.postln;
 ~world_divider = {
 	var rawtrig = \ticktrig.tr(0);
 
@@ -69,6 +68,6 @@
 
 	snd = snd + GVerb.ar(snd, 63, 4.8, 0.33, mul: 3.dbamp).sum;
 
-	Out.ar(0, snd!2 * -12.dbamp);
+	Out.ar(0, snd!2 * -10.dbamp);
 }).play
 )

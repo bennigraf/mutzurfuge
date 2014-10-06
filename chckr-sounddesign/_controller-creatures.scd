@@ -15,7 +15,7 @@ OSCdef(\action, { |msg|
 OSCdef(\spawnCreature, { |msg|
 	var uid = msg[1];
 	var race = msg[2];
-	["spawn", race, uid].postln;
+	// ["spawn", race, uid].postln;
 	// create synth of type race
 	// add to creatures-object under key uid
 
@@ -23,15 +23,17 @@ OSCdef(\spawnCreature, { |msg|
 }, '/creature/spawn');
 OSCdef(\killCreature, { |msg|
 	var uid = msg[1];
-	["killing", uid].postln;
+	// ["killing", uid].postln;
 	~creatures[uid].set(\alive, 0);
 	~creatures.removeAt(uid);
 }, '/creature/kill');
 OSCdef(\setCrtrValue, { |msg|
 	var uid = msg[1];
 	// set values pairwise, allows setting multiple via one osc call to sclang
-	((msg.size - 2)/2).do({ |n|
-		~creatures[uid].set(msg[n*2 + 2], msg[n*2 + 2 + 1]);
+	if(~creatures[uid].notNil, {
+		((msg.size - 2)/2).do({ |n|
+			~creatures[uid].set(msg[n*2 + 2], msg[n*2 + 2 + 1]);
+		});
 	});
 }, '/creature/setValue');
 OSCdef(\setPanValue, { |msg|
@@ -51,7 +53,9 @@ OSCdef.newMatching(\creatureBack, { |msg|
 	// msg.postln;
 	~creatures.keysValuesDo({ |uid, syn|
 		if(syn.nodeID == synthid, {
-			~nodeOSC.sendMsg('/fromCreature', uid, msg[3]);
+			var mmsg = ['/fromCreature', uid] ++ msg[3..];
+			// mmsg.postln;
+			~nodeOSC.sendMsg(*mmsg); // * unpacks array to arguments
 		});
 	});
 }, '/fromCreature');
@@ -60,3 +64,5 @@ OSCdef.trace(true)
 OSCdef.trace(false)
 
 ~creatures.size
+
+

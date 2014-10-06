@@ -1,9 +1,11 @@
-s.options.device_(ServerOptions.devices[4]);
+// s.options.device_(ServerOptions.devices[4]);
 s.options.memSize_(s.options.memSize * 32)
 s.boot
 s.quit
 s.scope
-s.latency_(0.5)
+s.latency_(0.01)
+
+s.volume.volume = -100;
 
 
 OSCFunc.trace(false)
