@@ -28,6 +28,9 @@ process.on('message', function worker_message(m, handle){
 	if(m[0] == 'markerpos') {
 		gw.setMarkerPos(m[1]);
 	}
+	if(m[0] == 'baseClr') {
+		gw.setBaseClr(m[1]);
+	}
 });
 
 
@@ -48,6 +51,12 @@ function GridWorker(id, w, h) {
 	this.interval = null; // interval to auto-run itself (and send own data)
 	
 	this.tilesWereSet = false; // only send data if this is true
+	
+	this.baseClr = new Colr({ r: 200, g: 200, b: 200, a: 1 });
+}
+
+GridWorker.prototype.setBaseClr = function(col) {
+	this.baseClr = new Colr(col);
 }
 
 GridWorker.prototype.spawn = function() {
@@ -71,14 +80,14 @@ GridWorker.prototype.makeTiles = function() {
 	for (var x = 0; x < this.width; x++) {
 		this.tiles[x] = [];
 		for (var y = 0; y < this.height; y++) {
-			this.tiles[x][y] = new Colr({ r: 255, g: 255, b: 255 });
+			this.tiles[x][y] = this.baseClr;
 		}
 	}
 }
 GridWorker.prototype.clearTiles = function() {
 	for (x in this.tiles) {
 		for(y in this.tiles[x]) {
-			this.tiles[x][y] = new Colr({ r: 255, g: 255, b: 255 });
+			this.tiles[x][y] = this.baseClr;
 		}
 	}
 	this.tilesWereSet = false;
@@ -110,15 +119,10 @@ GridWorker.prototype.makeMarkerFromId = function() {
 }
 
 GridWorker.prototype.setTile = function(pos, col) {
-	var white = Colr({r: 255, g: 255, b: 255});
 	var c = this.tiles[pos[0]][pos[1]];
 	var newc;
 	col = new Colr(col);
-	if(!Colr.equals(c, white)) {
-		newc = Colr.mix(c, col, 50);
-	} else {
-		newc = col;
-	}
+	newc = Colr.mix(c, col, 50);
 	this.tiles[pos[0]][pos[1]] = newc;
 }
 GridWorker.prototype.setTiles = function(tiles) {

@@ -25,6 +25,8 @@ function Grid(id, w, h) {
 		
 	this.transitions = []; // a transition is ['direction', boardid]
 	this._transitionsBySide = { 'top': false, 'left': false, 'bottom': false, 'right': false};
+	
+	this._baseColor = {r: 255, g: 255, b: 255, a: 1};
 
 	this.v = 0.3;
 	
@@ -62,6 +64,12 @@ Grid.prototype.setAddress = function(addr, port) {
 	
 	this.wrkr.send(['host', this._address, this._port]);
 }
+
+Grid.prototype.setBaseColor = function(col) {
+	this._baseColor = col;
+	this.wrkr.send(['baseClr', col]);
+}
+
 Grid.prototype.setGravity = function(g) {
 	this.gravity = g; // 'up', 'down', 'left', 'right'
 }
@@ -156,6 +164,7 @@ Grid.prototype.bad_memory_leak_restart_hack = function() {
 				this.wrkr.send(['spawn']);
 				this.wrkr.send(['host', this._address, this._port]);
 				this.wrkr.send(['markerpos', this._markerpos]);
+				this.wrkr.send(['baseClr', this._baseColor]);
 			
 				this.lastRestart = process.uptime();
 			}

@@ -9,6 +9,11 @@ function Rectr(mother) {
 	this.diedAt = 0;
 }
 
+Rectr.prototype.oscMessage = function(m) {
+	// hit
+	// console.log(m);
+}
+
 Rectr.prototype.spawn = function() {
 	var sr = Math.random();
 	this.size = 3 + (sr * sr * sr) * 22; // a side will be this + 1 long
@@ -128,10 +133,10 @@ Rectr.prototype.tick = function() {
 	////// draw stuff from here
 	this.m.renderTiles = { };
 
-	var white = new Colr({r: 255, g: 255, b: 255});
+	var white = new Colr({r: 255, g: 255, b: 255, a: 0});
 	for(ndx in this.traceTiles) {
 		var fact = this.traceTiles[ndx];
-		var c = Colr.lighten(this.m.clr, 30 + 1 * fact);
+		var c = Colr.mix(this.m.clr, white, 30 + 1 * fact + 26);
 		this.m.renderTiles[ndx] = Colr.mix(white, c, this.amp.get()['s'] * 100);
 	}
 	var headVect = Vec2D.ArrayVector(this.m.head[0], this.m.head[1]);

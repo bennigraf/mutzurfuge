@@ -11,14 +11,16 @@ function Bassdr01(mother) {
 
 Bassdr01.prototype.oscMessage = function(m) {
 	// hit
-	if(m == 13) {
+	// console.log(m);
+	if(m[0] == [13]) {
 		this.bassHit();
 	}
-	if(m==14) {
+	if(m[0] == 14) {
 		this.delHit();
 	}
 }
 Bassdr01.prototype.bassHit = function() {
+	this.height.stop();
 	this.height.tween({
 		from: { s: 2 + Math.random() * 3 },
 		to: { s: 0.3 },
@@ -28,19 +30,24 @@ Bassdr01.prototype.bassHit = function() {
 }
 
 Bassdr01.prototype.delHit = function() {
-	// console.log("delay");
-	this.height.tween({
-		from: { s: 2 + Math.random() * 1 },
-		to: { s: 0.3 },
-		easing: 'easeOutQuad',
-		duration: 850
-	});
-	this.noise.tween({
-		from: { s: 1 },
-		to: { s: 0.3 },
-		easing: 'easeOutQuad',
-		duration: 950
-	});
+	if(this.m.age - this._lastDelHit > 10) {
+		this.height.stop();
+		// console.log("delay");
+		this.height.tween({
+			from: { s: 1 + Math.random() * 1 },
+			to: { s: 0.3 },
+			easing: 'easeOutQuad',
+			duration: 850
+		});
+		this.noise.stop();
+		this.noise.tween({
+			from: { s: 2 },
+			to: { s: 0.3 },
+			easing: 'easeOutQuad',
+			duration: 950
+		});
+		this._lastDelHit = this.m.age;
+	}
 }
 
 Bassdr01.prototype.spawn = function() {
@@ -60,6 +67,8 @@ Bassdr01.prototype.spawn = function() {
 	this.height = new Twn({s: 0.5});
 	this.noise = new Twn({s: 0});
 	this.speed = 0.7 + Math.random() * 0.7;
+	
+	this._lastDelHit = this.m.age;
 }
 
 Bassdr01.prototype.newHead = function(lr) {
@@ -77,7 +86,7 @@ Bassdr01.prototype.newHead = function(lr) {
 		var obj = {
 			'pos': pos,
 			'createdAt': createdAt,
-			'col': Colr.desaturate(this.m.clr, Math.random() * 50)
+			'col': new Colr(this.m.clr.toRgb()).desaturate(Math.random() * 50)
 		}
 		this.heads[lr].push(obj);
 	}
@@ -97,13 +106,13 @@ Bassdr01.prototype.tick = function() {
 	// console.log(this.heads);
 	
 	if(this.diedAt == 0) {
-		var dyingProp = (this.m.age - 283) / 135
+		var dyingProp = (this.m.age - 483) / 235
 		if(dyingProp > Math.random()) {
 			this.diedAt = this.m.age;
 			this.amp.tween({
 				from: {s: 1},
 				to: {s: 0},
-				duration: 2493 // this is in seconds!
+				duration: 7493 // this is in seconds!
 			});
 		}
 	}
@@ -112,13 +121,12 @@ Bassdr01.prototype.tick = function() {
 	////// draw stuff from here
 	this.m.renderTiles = { };
 
-	var white = new Colr({r: 255, g: 255, b: 255});
-	var black = new Colr({r: 0, g: 0, b: 0});
+	var white = new Colr({r: 255, g: 255, b: 255, a: 0});
 	var amp = this.amp.get()['s'];
 	
 	for(i in this.oldheads) {
 		// console.log(this.oldheads[i]);
-		this.m.renderTiles[this.oldheads[i]] = new Colr({r: 255, g: 255, b: 255, a: 255});
+		this.m.renderTiles[this.oldheads[i]] = white;
 	}
 	this.oldheads = [ ];
 	
@@ -136,9 +144,6 @@ Bassdr01.prototype.tick = function() {
 	}
 	
 	// finally die
-	if(this.diedAt > 0 && this.m.age - this.diedAt > 199) {
-		this.m.alive = false;
-	};
 	if(this.amp.get()['s'] == 0) {
 		this.m.alive = false;
 	}

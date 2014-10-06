@@ -80,7 +80,7 @@ LilQuad.prototype.tick = function() {
 			});
 		}
 	}
-	if(this.m.age > 500) {
+	if(this.m.age > 500 && this.diedAt == 0) {
 		// console.log("dying");
 		this.diedAt = this.m.age;
 		this.amp.tween({
@@ -90,13 +90,14 @@ LilQuad.prototype.tick = function() {
 			// finish: function() { this.m.alive = false; console.log("dead"); }.bind(this)
 		});
 	}
-	if(this.diedAt > 0 && this.m.age - this.diedAt > 33) {
+	if(this.amp.get().s == 0) {
 		this.m.alive = false;
 	}
 	
 	// update rays
 	var removableRays = [];
-	for(var i = this.rays.length-1; i >= 0; i--) {
+	// for(var i = this.rays.length-1; i >= 0; i--) {
+	for (i in this.rays) {
 		var ray = this.rays[i];
 		var lastTile = ray.tiles[ray.tiles.length-1];
 		var newTile = [];
@@ -113,23 +114,21 @@ LilQuad.prototype.tick = function() {
 			}
 		} else {
 			// it's dying!!!!
-			if(ray.age - ray.diedAt > 20) {
-				removableRays.push(i);
+			if(ray.age - ray.diedAt > 19) {
+				// removableRays.push(i);
+				// this.rays.splice(removableRays[i], 1);
+				delete this.rays[i];
 			}
 		}
 		ray.age += 1;
 	}
-	// remove old rays
-	for(var i = 0; i < removableRays.length; i++) {
-		this.rays.splice(removableRays[i], 1);
-	}
 	
 	////// draw stuff from here
-	var white = new Colr({r: 255, g: 255, b: 255});
+	var white = new Colr({r: 255, g: 255, b: 255, a: 0});
 	this.m.renderTiles = { };
 	for(ndx in this.m.tiles) {
 		var t = this.m.tiles[ndx];
-		var c = Colr.lighten(this.m.clr, 5 * t[1]);
+		var c = Colr.mix(this.m.clr, white, 5 * t[1]);
 		c = Colr.mix(white, c, this.amp.get()['s'] * 100);
 		this.m.renderTiles[ndx] = c;
 		// console.log(ndx);
@@ -147,7 +146,7 @@ LilQuad.prototype.tick = function() {
 			if(!this.m.renderTiles[t[0]+"."+t[1]]) {
 				var co = this.m.clr.toHsv();
 				co.s = co.s + Math.random() * -0.3; // modulate saturation
-				co.s = co.s * (1-mod);
+				co.a = co.a * (1-mod);
 				var c = new Colr(co);
 				this.m.renderTiles[t[0]+"."+t[1]] = c;
 			}

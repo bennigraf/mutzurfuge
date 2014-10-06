@@ -6,8 +6,9 @@ var Rectr = require("./rectr.js");
 var Spreadr = require("./spreadr.js");
 
 
-// var RACES = ['lilquad', 'rectr', 'spreadr', 'bassdr01'];
-var RACES = ['lilquad', 'bassdr01'];
+// var RACES = ['spreadr'];
+var RACES = ['bss01', 'lilquad', 'bassdr01', 'tick', 'rectr'];
+// var RACES = ['rectr'];
 
 /*
 A Creature has a certain race (aka type) that defines it's behaviour and shape etc.
@@ -113,7 +114,7 @@ Creature.prototype.setRace = function(_race) {
 	this.qMsg(['race', this.race]);
 }
 // used for SC->Creature communication
-Creature.prototype.oscMessage = function(msg) {
+Creature.prototype.oscMMessage = function(msg) {
 	this.qMsg(['oscMsg', msg]);
 }
 

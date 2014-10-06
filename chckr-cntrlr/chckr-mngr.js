@@ -102,7 +102,7 @@ wrld.addGrid({ // f9
 });
 // */
 // /*
-wrld.addGrid({ // f0
+wrld.addGrid({ // f0 - tl
 	id: 691,
 	size: [43, 17],
 	markerpos: 'tl',
@@ -110,29 +110,32 @@ wrld.addGrid({ // f0
 	gravity: 'down',
 	transitions: [['right', [268]], ['bottom', [581]]]
 });
-wrld.addGrid({ // f1
+wrld.addGrid({ // f1 - tr
 	id: 268,
 	size: [43, 17],
 	markerpos: 'tr',
 	address: ['127.0.0.1', 5101],
 	gravity: 'down',
-	transitions: [['left', [691]], ['bottom', [761]]]
+	// transitions: [['left', [691]], ['bottom', [761]]]
+	transitions: [['left', [691]]]
 });
-wrld.addGrid({ // f2
+wrld.addGrid({ // f2 - bl
 	id: 581,
 	size: [43, 40],
 	markerpos: 'tr',
 	address: ["127.0.0.1", 5102],
 	gravity: 'down',
-	transitions: [['right', [761]], ['top', [691]]] // connection also to f0
+	// transitions: [['right', [761]], ['top', [691]]] // connection also to f0
+	transitions: [['top', [691]]] // connection also to f0
 });
-wrld.addGrid({ // f3
+/*
+wrld.addGrid({ // f3 - br
 	id: 761,
 	size: [30, 17],
 	markerpos: 'tl',
 	address: ["127.0.0.1", 5103],
 	gravity: 'down',
-	transitions: [['left', [761]], ['top', [268]]] // also to middle part
+	transitions: [['left', [581]], ['top', [268]]] // also to middle part
 });
 
 // */

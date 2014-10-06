@@ -25,6 +25,7 @@ function World() {
 	this.baseclr;
 	
 	this._gridsById;
+	this._creaturesByUid = { };
 	
 	this.worldmapCache = { };
 }
@@ -92,24 +93,28 @@ World.prototype.setOscServer = function(port, host) {
 			console.log("hit!", boardid, xpos, ypos);
 			this.spawnCreature(boardid, xpos, ypos);
 		}
-		if(msg[0] == '/mode') {
-			if(msg[1] != null) {
-				this.mode = msg[1]; // grid or mawi right now
-				console.log("setting mode to ", msg[1]);
-			}
-		}
 		if(msg[0] == '/baseclr') {
 			this.baseclr = new Colr({r: msg[1] * 255, g: msg[2] * 255, b: msg[3] * 255});
 		}
+		if(msg[0] == '/gridColor') {
+			for (i in this.grids) {
+				var c = {r: msg[1], g: msg[2], b: msg[3], a: msg[4] };
+				this.grids[i].setBaseColor(c);
+			}
+		}
 		if(msg[0] == '/fromCreature') {
-			for(i in this.creatures) {
-				if(this.creatures[i].uid == msg[1]) {
-					this.creatures[i].oscMessage(msg[2]);
-				}
+			var c = this.findCreatureByUid(msg[1]);
+			if(c) {
+				var args = [];
+				for (var i=2; i < msg.length; i++) {
+					args.push(msg[i]);
+				};
+				c.oscMMessage(args);
 			}
 		}
 	}.bind(this));
 }
+
 // used for SC
 World.prototype.setOscClient = function(port, host) {
 	this.oscSndr = new osc.Client(host, port);
@@ -118,16 +123,17 @@ World.prototype.setOscClient = function(port, host) {
 World.prototype.spawnCreature = function(boardid, x, y) { // x and y are 0..1 here
 	var c = new Creature(this);
 	var spwnCoords = this.findGridCoords(boardid, x, y);
-	// var spwnCoords = this.findGridCoords(268, x, y);
+	// var spwnCoords = this.findGridCoords(581, x, y);
 	if(spwnCoords) {
 		// c.spawn();
 		// c.setRootCoords(spwnCoords[0], spwnCoords[1], spwnCoords[2]);
 		c.spawn(null, [spwnCoords[0], spwnCoords[1], spwnCoords[2]]); // spawn takes race and rootcoords
-		// c.spawn('bassdr01', [spwnCoords[0], spwnCoords[1], spwnCoords[2]]); // spawn takes race and rootcoords
+		// c.spawn('tick', [spwnCoords[0], spwnCoords[1], spwnCoords[2]]); // spawn takes race and rootcoords
 		if(this.baseclr) {
 			c.setColor(this.baseclr);
 		}
 		this.creatures.push(c);
+		this._creaturesByUid[c.uid] = c;
 	} else {
 		console.log("couldn't find point for creature");
 	}
@@ -166,7 +172,7 @@ World.prototype.setTile = function(x, y, r, g, b) {
 	};
 }
 World.prototype.tick = function() {
-	this.autoMode(1);
+	this.autoMode(2);
 	
 	var time = process.hrtime();
 	time = time[0]+time[1]/1000000000;
@@ -174,6 +180,7 @@ World.prototype.tick = function() {
 	// tell sound-part it's ticking
 	if(this.oscSndr) {
 		this.oscSndr.send('/world/tick', 'tick');
+		// console.log("tick");
 	}
 	
 	// update creatures, remove dead ones
@@ -321,6 +328,20 @@ World.prototype.findGridById = function(id) {
 	if(this._gridsById[id]) {
 		return this._gridsById[id];
 	}
+	return false;
+}
+/* 
+ * return creature with certain id, or false if not found
+ * remove creatures that are apparently dead
+ */
+World.prototype.findCreatureByUid = function(uid) {
+	if(this._creaturesByUid[uid]) {
+		if(this._creaturesByUid[uid].alive) {
+			return this._creaturesByUid[uid];
+		} else {
+			delete this._creaturesByUid[uid];
+		}
+	}	
 	return false;
 }
 

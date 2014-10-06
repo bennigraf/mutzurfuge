@@ -1,11 +1,6 @@
 var Colr = require("tinycolor2");
 var uuid = require('node-uuid');
 
-var LilQuad = require("./lilquad.js");
-var Rectr = require("./rectr.js");
-var Spreadr = require("./spreadr.js");
-var Bassdr01 = require("./bassdr01.js");
-
 var osc = require('node-osc');
 
 /*
@@ -69,7 +64,7 @@ Worker.prototype.spawn = function() {
 	// console.log("worker spawning");
 	this.tiles["0.0"] = ['set', 0]; // state, age?
 	this.head = [0, 0];
-	this.clr = new Colr({h: Math.random() * 360, s: 100, v: 100});
+	this.clr = new Colr({h: Math.random() * 360, s: 100, v: 100, a: 1});
 	// console.log(this.clr);
 	this.run();
 	
@@ -79,23 +74,10 @@ Worker.prototype.setColor = function(_col) {
 }
 Worker.prototype.setRace = function(_race) {
 	this.race = _race;
-	switch (this.race) {
-	case "lilquad":
-		this.cr = new LilQuad(this);
-		break;
-	case "rectr":
-		this.cr = new Rectr(this);
-		break;
-	case "spreadr":
-		this.cr = new Spreadr(this);
-		break;
-	case "bassdr01":
-		this.cr = new Bassdr01(this);
-		break;
-	default:
-		break;
-	}
+	var Creature = require("./"+this.race+".js");
+	this.cr = new Creature(this);
 	this.cr.spawn();
+	console.log("spawned", this.race);
 }
 Worker.prototype.setWorldMap = function(wm) {
 	this.worldMap = wm;
