@@ -69,7 +69,26 @@ Controller.prototype.setOscClient = function(port, host) {
 	this.oscSndr = new osc.Client(host, port);
 }
 
+World.prototype.setOscServer = function(port, host) {
+	this.oscServer = new osc.Server(port, host);
+	
+	this.oscServer.on("message", function (msg, rinfo) {
+		// console.log("got osc message", msg);
+		// dirty hack because oF needs to send bundles for some stupid reason...
+		if(msg[0] == '#bundle') {
+			msg = msg[2];
+		}
+		if(msg[0] == '/mode') {
+			if(msg[1] != null) {
+				this.mode = msg[1]; // grid or mawi right now
+				console.log("setting mode to ", msg[1]);
+			}
+		}
+	}.bind(this));
+}
+
 
 var c = new Controller();
-c.setTcpServer(12333, '0.0.0.0');
-c.setOscClient(12332, '0.0.0.0');
+c.setTcpServer(12333, '0.0.0.0'); // global tcp stuff
+c.setOscClient(12332, '0.0.0.0'); // CREATURES stuff (chckr-mngr)
+c.setOscServer(12331, '0.0.0.0'); // global control
