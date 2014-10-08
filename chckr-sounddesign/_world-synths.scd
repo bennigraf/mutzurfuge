@@ -10,7 +10,7 @@
 
 	var tme = Timer.kr(rawtrig).lag(25).max(0.0001);
 	var ticktrig = Impulse.kr((tme.reciprocal * 8).max(0.1));
-	// var ticktrig = Impulse.kr(15 * 16);
+	// var ticktrig = Impulse.kr(15 * 4);
 	// var tme = Timer.kr(ticktrig).lag(25);
 
 	// pulse dividers from here...
@@ -65,9 +65,27 @@
 	});
 	snd = snd + (delsnd * -12.dbamp);
 
-
 	snd = snd + GVerb.ar(snd, 63, 4.8, 0.33, mul: 3.dbamp).sum;
+	snd = snd * { SinOsc.ar(1/Rand(10, 22), Rand(0, 2pi)).range(-9, 0).dbamp }!6;
 
-	Out.ar(0, snd!2 * -10.dbamp);
+	Out.ar(0, snd * -17.dbamp);
 }).play
 )
+
+(
+~world_master.free;
+~world_master = {
+	var snd = In.ar(0, 6);
+	var subwoof;
+
+	snd = CompanderD.ar(snd, -19.dbamp, 1, 1/3, 0.01, 0.04);
+	snd = Limiter.ar(snd, -3.dbamp);
+
+	subwoof = LPF.ar(snd.sum * -3.dbamp, 80);
+	subwoof = Limiter.ar(subwoof, -3.dbamp);
+	Out.ar(7, subwoof);
+
+	ReplaceOut.ar(0, snd);
+	0;
+}.play
+);

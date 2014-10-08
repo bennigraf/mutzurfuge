@@ -66,3 +66,17 @@ OSCdef.trace(false)
 ~creatures.size
 
 
+
+(
+OSCdef(\ampcontrol, { |msg|
+	~setVol.value(msg[1].linlin(0, 1, -40, 0));
+	if(msg[1] < 0.01) { ~setVol.value(-100) }
+}, '/1/fader1');
+)
+
+
+)
+
+
+
+24.degrad.tan * 25.5
