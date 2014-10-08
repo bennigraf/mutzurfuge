@@ -69,7 +69,7 @@ Controller.prototype.setOscClient = function(port, host) {
 	this.oscSndr = new osc.Client(host, port);
 }
 
-World.prototype.setOscServer = function(port, host) {
+Controller.prototype.setOscServer = function(port, host) {
 	this.oscServer = new osc.Server(port, host);
 	
 	this.oscServer.on("message", function (msg, rinfo) {
