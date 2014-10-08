@@ -106,7 +106,7 @@ Bassdr01.prototype.tick = function() {
 	// console.log(this.heads);
 	
 	if(this.diedAt == 0) {
-		var dyingProp = (this.m.age - 483) / 235
+		var dyingProp = (this.m.age - 483) / 335
 		if(dyingProp > Math.random()) {
 			this.diedAt = this.m.age;
 			this.amp.tween({

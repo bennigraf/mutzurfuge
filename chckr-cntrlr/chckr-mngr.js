@@ -13,12 +13,13 @@ wrld.setOscClient(57120, '0.0.0.0');
 // each grid has one or more transitions to other grids; 
 // and obviously a size and an address
 // and a gravity would be nice
-/*
+// /*
 wrld.addGrid({ // f0
 	id: 691,
 	size: [43, 17],
 	markerpos: 'tl',
 	address: ["10.0.0.12", 5100],
+	baseColor: {r: 240, g: 240, b: 240, a: 1 },
 	gravity: 'down',
 	transitions: [['top', [581]]]
 });
@@ -27,6 +28,7 @@ wrld.addGrid({ // f1
 	size: [43, 17],
 	markerpos: 'tr',
 	address: ["10.0.0.10", 5100],
+	baseColor: {r: 240, g: 240, b: 240, a: 1 },
 	gravity: 'down',
 	transitions: [['bottom', [581]]]
 });
@@ -35,6 +37,7 @@ wrld.addGrid({ // f2
 	size: [43, 40],
 	markerpos: 'tr',
 	address: ["10.0.0.14", 5100],
+	baseColor: {r: 240, g: 240, b: 240, a: 1 },
 	gravity: 'down',
 	transitions: [['bottom', [761]], ['top', [268, 691]]] // connection also to f0
 });
@@ -43,6 +46,7 @@ wrld.addGrid({ // f3
 	size: [30, 17],
 	markerpos: 'tl',
 	address: ["10.0.0.12", 5101],
+	baseColor: {r: 240, g: 240, b: 240, a: 1 },
 	gravity: 'down',
 	transitions: [['top', [581, 286]]] // also to middle part
 });
@@ -53,6 +57,7 @@ wrld.addGrid({ // f4
 	size: [30, 17],
 	markerpos: 'tr',
 	address: ["10.0.0.11", 5100],
+	baseColor: {r: 240, g: 240, b: 240, a: 1 },
 	gravity: 'down',
 	transitions: [['top', [484]]] // to f6/balkon hinten oben seite
 });
@@ -61,6 +66,7 @@ wrld.addGrid({ // f5
 	size: [30, 17],
 	markerpos: 'tl',
 	address: ["10.0.0.13", 5100],
+	baseColor: {r: 240, g: 240, b: 240, a: 1 },
 	gravity: 'down',
 	transitions: [['top', [761]]] // to f3/balkon oben seite
 });
@@ -71,6 +77,7 @@ wrld.addGrid({ // f6
 	size: [43, 17],
 	markerpos: 'tr',
 	address: ["10.0.0.12", 5102],
+	baseColor: {r: 240, g: 240, b: 240, a: 1 },
 	gravity: 'down',
 	transitions: [['bottom', [99, 528]]] // back down to middle/f4
 });
@@ -79,6 +86,7 @@ wrld.addGrid({ // f7
 	size: [43, 40],
 	markerpos: 'tr',
 	address: ["10.0.0.14", 5101],
+	baseColor: {r: 240, g: 240, b: 240, a: 1 },
 	gravity: 'down',
 	transitions: [['bottom', [222, 903]], ['top', [484]]] // also to f9
 });
@@ -87,6 +95,7 @@ wrld.addGrid({ // f8
 	size: [43, 17],
 	markerpos: 'tl',
 	address: ["10.0.0.15", 5100],
+	baseColor: {r: 240, g: 240, b: 240, a: 1 },
 	gravity: 'down',
 	transitions: [['top', [99]]]
 });
@@ -97,16 +106,18 @@ wrld.addGrid({ // f9
 	size: [43, 17],
 	markerpos: 'tr',
 	address: ["10.0.0.14", 5102],
+	baseColor: {r: 240, g: 240, b: 240, a: 1 },
 	gravity: 'down',
 	transitions: [['bottom', [99]]] // back to f7/balkon oben
 });
 // */
-// /*
+/*
 wrld.addGrid({ // f0 - tl
 	id: 691,
 	size: [43, 17],
 	markerpos: 'tl',
 	address: ["127.0.0.1", 5100],
+	baseColor: {r: 240, g: 240, b: 240, a: 1 },
 	gravity: 'down',
 	transitions: [['right', [268]], ['bottom', [581]]]
 });
@@ -115,6 +126,7 @@ wrld.addGrid({ // f1 - tr
 	size: [43, 17],
 	markerpos: 'tr',
 	address: ['127.0.0.1', 5101],
+	baseColor: {r: 240, g: 240, b: 240, a: 1 },
 	gravity: 'down',
 	// transitions: [['left', [691]], ['bottom', [761]]]
 	transitions: [['left', [691]]]
@@ -124,6 +136,7 @@ wrld.addGrid({ // f2 - bl
 	size: [43, 40],
 	markerpos: 'tr',
 	address: ["127.0.0.1", 5102],
+	baseColor: {r: 240, g: 240, b: 240, a: 1 },
 	gravity: 'down',
 	// transitions: [['right', [761]], ['top', [691]]] // connection also to f0
 	transitions: [['top', [691]]] // connection also to f0
@@ -134,6 +147,7 @@ wrld.addGrid({ // f3 - br
 	size: [30, 17],
 	markerpos: 'tl',
 	address: ["127.0.0.1", 5103],
+	baseColor: {r: 240, g: 240, b: 240, a: 1 },
 	gravity: 'down',
 	transitions: [['left', [581]], ['top', [268]]] // also to middle part
 });

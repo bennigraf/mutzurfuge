@@ -7,8 +7,8 @@ var Spreadr = require("./spreadr.js");
 
 
 // var RACES = ['spreadr'];
-var RACES = ['bss01', 'lilquad', 'bassdr01', 'tick', 'rectr'];
-// var RACES = ['rectr'];
+var RACES = ['bss01', 'lilquad', 'bassdr01', 'tick', 'rectr', 'snare01', 'pno'];
+// var RACES = ['pno'];
 
 /*
 A Creature has a certain race (aka type) that defines it's behaviour and shape etc.

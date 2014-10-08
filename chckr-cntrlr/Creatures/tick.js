@@ -145,7 +145,6 @@ Tick.prototype.tick = function() {
 	var white = new Colr({r: 255, g: 255, b: 255, a:0});
 	
 	// draw 'trace' first
-	// for(ndx in this.traceTiles) {
 	for(ndx in offsetTrace) {
 		// var fact = this.traceTiles[ndx] / 2;
 		var fact = offsetTrace[ndx] / 1.5;
