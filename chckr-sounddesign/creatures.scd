@@ -1,4 +1,24 @@
 (
+~myPanningLaw = { |snd|
+	var panenv1, panenv2, panenv3, panenv4;
+	var pannedout1, pannedout2, pannedout3, pannedout4;
+
+	panenv1 = EnvGen.ar(Env.linen(0.8, 1/5, 0.8), Trig1.ar(\pantrig0.tr(0), 0.1));
+	panenv2 = EnvGen.ar(Env.linen(0.8, 1/5, 0.8), Trig1.ar(\pantrig1.tr(0), 0.1));
+	panenv3 = EnvGen.ar(Env.linen(0.8, 1/5, 0.8), Trig1.ar(\pantrig2.tr(0), 0.1));
+	panenv4 = EnvGen.ar(Env.linen(0.8, 1/5, 0.8), Trig1.ar(\pantrig3.tr(0), 0.1));
+
+	pannedout1 = PanX.ar(6, snd, \panpos0.kr(0).lag(1), panenv1);
+	pannedout2 = PanX.ar(6, snd, \panpos1.kr(0).lag(1), panenv2);
+	pannedout3 = PanX.ar(6, snd, \panpos2.kr(0).lag(1), panenv3);
+	pannedout4 = PanX.ar(6, snd, \panpos3.kr(0).lag(1), panenv4);
+
+	Out.ar(0, pannedout1 * -6.dbamp);
+	Out.ar(0, pannedout2 * -6.dbamp);
+	Out.ar(0, pannedout3 * -6.dbamp);
+	Out.ar(0, pannedout4 * -6.dbamp);
+};
+
 SynthDef(\tick, {
 
 	var presnd, snd, snd1, snd2, trig, nv, nv2, microdelay;
@@ -61,9 +81,8 @@ SynthDef(\tick, {
 		SendReply.kr(t, '/fromCreature', [19]);
 	}.value();
 }).add;
-)
 
-(
+
 SynthDef(\bassdr01, {
 	var snd, del, x;
 
@@ -82,15 +101,19 @@ SynthDef(\bassdr01, {
 	var nv = EnvGen.kr(Env.perc(0.01, 0.27), trig);
 	var note = TChoose.kr(In.kr(~div_buses[1]), [-3, -2, 0, 4]);
 
-	snd = LPF.ar(Saw.ar((32+note).midicps), 60);
+	snd = LPF.ar(Saw.ar((32+note).midicps), 600);
 	snd = snd + LPF.ar(BrownNoise.ar(-12.dbamp), 88);
 	snd = snd * nv;
 	snd = (snd * 13.dbamp).softclip * -6.dbamp;
+
+	// Trig1.kr(trig, 0.3).poll;
+	// snd = SinOsc.ar* nv;
 
 	dfacts = TChoose.kr(1, dfacts);
 	del = RHPF.ar(CombC.ar(snd, 3, tme * dfacts[0], dfacts[1], 1), 230 + SinOsc.kr(1/18).range(-30, 100), 0.8);
 
 	snd = snd + del;
+	// snd.poll;
 
 	SendReply.kr(trig, '/fromCreature', [13]);
 	x = {
@@ -100,16 +123,30 @@ SynthDef(\bassdr01, {
 		SendReply.kr(Trig1.kr(onset, 0.5), '/fromCreature', [14]);
 	}.value();
 
+	// output to color bus stuff for light objects
+
+	// tme.poll;
+	x = {
+		var lnum = 4; // lammpsnum
+		var col = {Rand(0, 1)}!3;
+		var amp = (Amplitude.ar(snd, 0.001, 0.2));
+		var chan = Rand(-1, 1).round(1/lnum*2);
+		var p = PanAz.ar(lnum, amp, chan);
+		// amp.ampdb.poll;
+		(lnum).do({|n|
+			var in = In.ar(~bss_bus.subBus(n*3, 3), 3);
+			var sig = (in + (col * p[n])).clip;
+			Out.ar(~bss_bus.subBus(n*3, 3), sig);
+		});
+	}.value();
+
 	snd = snd * EnvGen.ar(Env.asr(0, 1, 7.5), \alive.ar(1), doneAction: 2);
-	// Out.ar(0, snd!2);
 	snd = snd * 6.dbamp;
-	// Amplitude.ar(snd, 0, 2).ampdb.poll;
 
 	~myPanningLaw.value(snd);
 }).add;
-);
 
-(
+
 SynthDef(\bss01, {
 	var snd, nv, fnv, ftrig, tme, note, mod;
 	var fnv2;
@@ -160,12 +197,8 @@ SynthDef(\bss01, {
 
 	~myPanningLaw.value(snd);
 }).add;
-)
 
 
-s.volume.volume = -88
-
-(
 SynthDef(\rectr, {
 	var snd, cmbsnd;
 	var panenv1, panenv2, panenv3, panenv4;
@@ -201,12 +234,9 @@ SynthDef(\rectr, {
 
 	~myPanningLaw.value(snd);
 }).add;
-)
 
 
 
-
-(
 SynthDef(\lilquad, {
 	var snd, revsnd, x;
 	var panenv1, panenv2, panenv3, panenv4;
@@ -239,12 +269,13 @@ SynthDef(\lilquad, {
 	~myPanningLaw.value(snd);
 
 }).add;
-)
 
-(
+
+
 SynthDef(\snare01, {
-		var snd, tick, trig1, trig2, trig3, nv1, nv2, dshot;
+	var snd, tick, trig1, trig2, trig3, nv1, nv2, dshot;
 	var seq, sntone, snvol, tme;
+	var rev, spc;
 
 	tme = In.kr(~div_buses['tempo']).reciprocal * 4;
 	// tme.poll;
@@ -289,22 +320,25 @@ SynthDef(\snare01, {
 	snd = snd + (tick * -14.dbamp).softclip;
 	snd = Limiter.ar(snd);
 
-	snd = snd * EnvGen.ar(Env.asr(0.5, 1, 0.5), \alive.ar(1), doneAction: 2);
 
 	snd = snd.sum * -28.dbamp;
 	// Amplitude.ar(snd).ampdb.poll;
+	snd = snd * EnvGen.ar(Env.asr(5.2, 1, 5.5), \alive.ar(1));
+	rev = HPF.ar(GVerb.ar(snd, 63, 4.2, 0.48, drylevel: 0, mul: -11.dbamp), 640);
+	spc = EnvGen.ar(Env.asr(8.3, 1, 5), \alive.ar(1), doneAction: 2) ** 1;
+
+	snd = SelectX.ar(spc, [rev, snd]);
 
 	SendReply.kr(Changed.kr(A2K.kr(sntone)), '/fromCreature', [11, sntone.cpsmidi]);
 
 	~myPanningLaw.value(snd);
 }).add;
-);
 
-(
-var basepath = "/Users/bennigraf/Documents/Studium/MA/stublic-14/code/mutzurfuge/chckr-sounddesign/samples/piano/";
+
+~basepath = "/Users/bennigraf/Documents/Studium/MA/stublic-14/code/mutzurfuge/chckr-sounddesign/samples/piano/";
 ~pnobufs.do({ |b| b.free });
 ~pnobufs = ['Ab','Bb','Db', 'Eb', 'Gb'].collect({|t|
-	Buffer.read(s, basepath++t++"3-3.wav");
+	Buffer.read(s, ~basepath++t++"3-3.wav");
 });
 SynthDef(\pno, {
 	var snd, rev, buf, trig, tme, tmp;
@@ -333,28 +367,8 @@ SynthDef(\pno, {
 
 	~myPanningLaw.value(snd.sum);
 }).add;
-);
 
-(
-~myPanningLaw = { |snd|
-	var panenv1, panenv2, panenv3, panenv4;
-	var pannedout1, pannedout2, pannedout3, pannedout4;
 
-	panenv1 = EnvGen.ar(Env.linen(0.8, 1/5, 0.8), Trig1.ar(\pantrig0.tr(0), 0.1));
-	panenv2 = EnvGen.ar(Env.linen(0.8, 1/5, 0.8), Trig1.ar(\pantrig1.tr(0), 0.1));
-	panenv3 = EnvGen.ar(Env.linen(0.8, 1/5, 0.8), Trig1.ar(\pantrig2.tr(0), 0.1));
-	panenv4 = EnvGen.ar(Env.linen(0.8, 1/5, 0.8), Trig1.ar(\pantrig3.tr(0), 0.1));
-
-	pannedout1 = PanX.ar(6, snd, \panpos0.kr(0).lag(1), panenv1);
-	pannedout2 = PanX.ar(6, snd, \panpos1.kr(0).lag(1), panenv2);
-	pannedout3 = PanX.ar(6, snd, \panpos2.kr(0).lag(1), panenv3);
-	pannedout4 = PanX.ar(6, snd, \panpos3.kr(0).lag(1), panenv4);
-
-	Out.ar(0, pannedout1 * -6.dbamp);
-	Out.ar(0, pannedout2 * -6.dbamp);
-	Out.ar(0, pannedout3 * -6.dbamp);
-	Out.ar(0, pannedout4 * -6.dbamp);
-}
 )
 
 

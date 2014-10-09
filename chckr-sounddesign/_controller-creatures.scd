@@ -59,6 +59,10 @@ OSCdef.newMatching(\creatureBack, { |msg|
 		});
 	});
 }, '/fromCreature');
+
+OSCdef(\worldbreak, { |msg|
+	~world_master.set(\break, 1);
+}, '/world/break');
 )
 OSCdef.trace(true)
 OSCdef.trace(false)
@@ -77,6 +81,6 @@ OSCdef(\ampcontrol, { |msg|
 
 )
 
-
+s.scope
 
 24.degrad.tan * 25.5
