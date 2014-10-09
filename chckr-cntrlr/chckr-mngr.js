@@ -159,41 +159,6 @@ wrld.run();
 
 // wrld.mode = "mawi";
 
-wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-// wrld.spawnCreature(268, Math.random(), Math.random());
-
-// wrld.spawnCreature(691, Math.random(), Math.random());
-// wrld.spawnCreature(581, Math.random(), Math.random());
-// wrld.spawnCreature(761, Math.random(), Math.random());
-// wrld.spawnCreature(528, Math.random(), Math.random());
-// wrld.spawnCreature(286, Math.random(), Math.random());
-// wrld.spawnCreature(484 , Math.random(), Math.random());
-// wrld.spawnCreature(99, Math.random(), Math.random());
-// wrld.spawnCreature(222, Math.random(), Math.random());
-// wrld.spawnCreature(903, Math.random(), Math.random());
 
 ////////////////////////// now:
 // Creatures are 'blind', they don't see the whole world and what's going on it.

@@ -77,11 +77,11 @@ Worker.prototype.setRace = function(_race) {
 	var Creature = require("./"+this.race+".js");
 	this.cr = new Creature(this);
 	this.cr.spawn();
-	console.log("spawned", this.race);
 }
 Worker.prototype.setWorldMap = function(wm) {
 	this.worldMap = wm;
 	this.alive = true;
+	console.log("spawned", this.race, "at", this.worldMap['0.0']);
 }
 
 Worker.prototype.tick = function() {

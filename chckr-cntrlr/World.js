@@ -8,10 +8,10 @@ rClient.on('error', function(e) {
 });
 
 var Colr = require("tinycolor2");
-
 var Grid = require('./Grid.js');
 // var Creature = require('./Creatures/_Creature.js');
 var Creature = require('./Creatures/_ProcCreature.js');
+var Spawner = require('./Spawner.js');
 
 module.exports = World;
 
@@ -28,6 +28,8 @@ function World() {
 	this._creaturesByUid = { };
 	
 	this.worldmapCache = { };
+	
+	this.spawner = new Spawner(this);
 }
 
 World.prototype.worldmapFromCache = function(key, cb) {
@@ -66,6 +68,7 @@ World.prototype.addGrid = function(gridobj) {
 		}
 	}
 	g.setMarkerPos(gridobj.markerpos);
+	g.setBaseColor(gridobj.baseColor);
 	this.grids.push(g);
 	this._updateGridMeta();
 }
@@ -91,7 +94,9 @@ World.prototype.setOscServer = function(port, host) {
 			xpos = msg[2] || 0.5;
 			ypos = msg[3] || 0.5;
 			console.log("hit!", boardid, xpos, ypos);
-			this.spawnCreature(boardid, xpos, ypos);
+			// this.spawnCreature(boardid, xpos, ypos);
+			this.spawner.spawn(boardid, xpos, ypos);
+			
 		}
 		if(msg[0] == '/baseclr') {
 			this.baseclr = new Colr({r: msg[1] * 255, g: msg[2] * 255, b: msg[3] * 255});
@@ -121,47 +126,7 @@ World.prototype.setOscClient = function(port, host) {
 }
 
 World.prototype.spawnCreature = function(boardid, x, y) { // x and y are 0..1 here
-	var c = new Creature(this);
-	var spwnCoords = this.findGridCoords(boardid, x, y);
-	// var spwnCoords = this.findGridCoords(581, x, y);
-	if(spwnCoords) {
-		// c.spawn();
-		// c.setRootCoords(spwnCoords[0], spwnCoords[1], spwnCoords[2]);
-		c.spawn(null, [spwnCoords[0], spwnCoords[1], spwnCoords[2]]); // spawn takes race and rootcoords
-		// c.spawn('tick', [spwnCoords[0], spwnCoords[1], spwnCoords[2]]); // spawn takes race and rootcoords
-		if(this.baseclr) {
-			c.setColor(this.baseclr);
-		}
-		this.creatures.push(c);
-		this._creaturesByUid[c.uid] = c;
-	} else {
-		console.log("couldn't find point for creature");
-	}
-}
-World.prototype.autoMode = function(cpg) {
-	cpg = cpg || 3; // max creatures per grid
-	// counts creatures per grid
-	// if there are less than 3 creatures per grid, maybe spawn one
-	// creatures have limited life spans, so they die anyways
-	var gridCreatureCounts = {};
-	for (i in this.creatures) {
-		if(!gridCreatureCounts[this.creatures[i].roots[0]]) {
-			gridCreatureCounts[this.creatures[i].roots[0]] = 1;
-		} else {
-			gridCreatureCounts[this.creatures[i].roots[0]] += 1;
-		}
-	}
-	for(i in this.grids) {
-		var g = this.grids[i];
-		if(!gridCreatureCounts[g.id]) {
-			gridCreatureCounts[g.id] = 0;
-		}
-		var spawnProp = (1 - Math.min(cpg, gridCreatureCounts[g.id]) / cpg) * 0.02; // 0.1 to 0
-		if(Math.random() < spawnProp) {
-			this.spawnCreature(g.id, Math.random(), Math.random());
-			// console.log("spawing on", g.id);
-		}
-	}
+	console.log("DEPRECATED");
 }
 World.prototype.setTile = function(x, y, r, g, b) {
 	var ln = 0.000000001;
@@ -172,7 +137,8 @@ World.prototype.setTile = function(x, y, r, g, b) {
 	};
 }
 World.prototype.tick = function() {
-	this.autoMode(2);
+	// this.spawner.autoMode(1);
+	this.spawner.smartMode();
 	
 	var time = process.hrtime();
 	time = time[0]+time[1]/1000000000;
