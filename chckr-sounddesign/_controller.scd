@@ -1,5 +1,5 @@
 Server.default = Server.internal
-s.options.device_(ServerOptions.devices[4]);
+s.options.device_(ServerOptions.devices[3]);
 s.options.memSize_(s.options.memSize * 32)
 s.boot
 s.quit
@@ -13,7 +13,7 @@ s.latency_(0.01)
 }
 
 ~setVol.value(10);
-s.volume.volume = 10
+s.volume.volume = 20
 
 OSCFunc.trace(false)
 

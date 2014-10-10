@@ -101,7 +101,7 @@ SynthDef(\bassdr01, {
 	var nv = EnvGen.kr(Env.perc(0.01, 0.27), trig);
 	var note = TChoose.kr(In.kr(~div_buses[1]), [-3, -2, 0, 4]);
 
-	snd = LPF.ar(Saw.ar((32+note).midicps), 600);
+	snd = LPF.ar(Saw.ar((32+note).midicps), 60);
 	snd = snd + LPF.ar(BrownNoise.ar(-12.dbamp), 88);
 	snd = snd * nv;
 	snd = (snd * 13.dbamp).softclip * -6.dbamp;

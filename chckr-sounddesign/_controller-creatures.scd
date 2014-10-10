@@ -51,6 +51,11 @@ OSCdef(\setPanValue, { |msg|
 OSCdef.newMatching(\creatureBack, { |msg|
 	var synthid = msg[1];
 	// msg.postln;
+	if(~world_master.nodeID == synthid) {
+		var mmsg = ['/markerAmp'] ++ msg[3..];
+		// mmsg.postln;
+		~nodeOSC.sendMsg(*mmsg);
+	};
 	~creatures.keysValuesDo({ |uid, syn|
 		if(syn.nodeID == synthid, {
 			var mmsg = ['/fromCreature', uid] ++ msg[3..];
@@ -61,7 +66,7 @@ OSCdef.newMatching(\creatureBack, { |msg|
 }, '/fromCreature');
 
 OSCdef(\worldbreak, { |msg|
-	~world_master.set(\break, 1);
+	~breaktrigbus.set(1);
 }, '/world/break');
 )
 OSCdef.trace(true)

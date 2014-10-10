@@ -1,4 +1,19 @@
 (
+// buses
+var lammpsnum = 4;
+if(~bss_bus.isNil, {
+	~bss_bus = Bus.audio(s, lammpsnum * 3);
+});
+if(~bss_kbus.isNil, {
+	~bss_kbus = Bus.control(s, lammpsnum * 3);
+});
+
+~breaktrigbus = Bus.control(s, 1);
+~breakbufs = Buffer.alloc(s, 6 * s.sampleRate, 1)!6; // channum
+
+)
+
+(
 ~world_divider.free;
 ~div_buses.do({|b|b.free});
 ~div_buses = ();
@@ -73,13 +88,6 @@
 )
 s.scope
 ({
-	var lammpsnum = 4;
-	if(~bss_bus.isNil, {
-		~bss_bus = Bus.audio(s, lammpsnum * 3);
-	});
-	if(~bss_kbus.isNil, {
-		~bss_kbus = Bus.control(s, lammpsnum * 3);
-	});
 	~bss_recv.free;
 	s.sync();
 	~bss_recv = {
@@ -126,24 +134,85 @@ s.scope
 }.fork);
 
 (
+~breakone = { |snd, trig|
+	// veeerrrrrrrbbbbbbb
+	var rev, spcnv, roomnv, decnv, hpnv, hpqnv;
+	spcnv = EnvGen.kr(Env.linen(42, 12, 19), trig);
+	decnv = EnvGen.kr(Env.linen(42, 12, 19), trig).linlin(0, 1, 3.1, 15.3);
+	roomnv = 133;
+	rev = GVerb.ar(snd, roomnv, decnv, 0.3, 0.5, 33, drylevel: 0, earlyreflevel: 0).sum;
+	snd = SelectX.ar(spcnv, [snd, rev]);
+	hpnv = EnvGen.kr(Env.linen(42, 12, 19, 1), trig);
+	hpnv = hpnv * LFNoise2.kr(1/2.3).range(0.8, 1.2);
+	hpqnv = EnvGen.kr(Env.linen(42, 12, 19, 1), trig);
+	snd = RHPF.ar(snd, hpnv.linlin(0, 1, 22, TRand.kr(5849,11423, trig)), hpqnv.linlin(0, 1, 2, 0.2));
+	snd;
+};
+~breaktwo = { |snd, trig|
+	// bitcrush/distortion and silence
+	var co, cr, crushnv;
+	crushnv = EnvGen.kr(Env.linen(42, 12, 19), trig);
+	c = CompanderD.ar(snd, -32.dbamp, 1, 1/8, 0.01, 2) * 10.dbamp;
+	cr = c.round(1/(2 ** crushnv.linlin(0, 1, 7, 2)));
+	snd = SelectX.ar(crushnv, [snd, cr]);
+	// snd = c;
+	snd;
+};
+~breakthree = { |snd, trig, n|
+	// Buffer going down
+	var pb, pbnv, ratenv, rectrig;
+	var lpnv, lpqnv;
+	pbnv = EnvGen.kr(Env.linen(42, 12, 19), trig);
+	rectrig = Trig1.kr(trig, 73).lag(0.1);
+	RecordBuf.ar(snd * rectrig, ~breakbufs[n],0, 1, 0.5, trigger: trig);
+	ratenv = EnvGen.kr(Env.linen(10, 1, 10, 1), trig).linlin(0, 1, 1, 0.1);
+	pb = PlayBuf.ar(1, ~breakbufs[n], ratenv, 1, 0, 1);
+
+	lpnv = EnvGen.kr(Env.linen(42, 12, 19, 1), trig);
+	lpnv = lpnv * LFNoise2.kr(1/2.3).range(0.7, 1.3);
+	lpqnv = EnvGen.kr(Env.linen(42, 12, 19, 1), trig);
+	pb = RLPF.ar(pb, lpnv.linlin(0, 1, 10000, TRand.kr(313, 155)), lpqnv.linlin(0, 1, 2, 0.2));
+
+	snd = SelectX.ar(pbnv, [snd, pb]);
+	snd;
+};
 ~world_master.free;
 ~world_master = {
 	var snd = In.ar(0, 6);
 	var subwoof;
+	var breaktrig, markernv;
 
 	// Amplitude.ar(snd).ampdb.poll(1);
 	snd = CompanderD.ar(snd, -19.dbamp, 1, 1/3, 0.01, 0.04);
 	snd = Limiter.ar(snd, -3.dbamp);
 
+	// snd = snd * -88.dbamp;
+	breaktrig = InTrig.kr(~breaktrigbus);
+	snd = snd.collect({ |snd, n|
+		TChoose.ar(breaktrig, [
+			~breakone.value(snd, breaktrig),
+			~breaktwo.value(snd, breaktrig),
+			~breakthree.value(snd, breaktrig, n)]
+		);
+		// ~breakthree.value(snd, breaktrig, n);
+		// snd.postln;
+	});;
+
+	markernv = EnvGen.kr(Env.linen(2, 66, 2), breaktrig);
+	SendReply.kr(Impulse.kr(20) * Trig1.kr(breaktrig, 22), '/fromCreature', [1 - markernv]);
+
+
 	subwoof = LPF.ar(snd.sum * -3.dbamp, 80);
 	subwoof = Limiter.ar(subwoof, -3.dbamp);
 	Out.ar(7, subwoof);
-
-	// snd = snd * -88.dbamp;
 
 	// ReplaceOut.ar(0, snd);
 	snd = snd.collect({|snd, n| Pan2.ar(snd, (1/5 * n * 2 - 1)) }).sum;
 	ReplaceOut.ar(0, snd ++ [0, 0, 0, 0]);
 	0;
-}.play(addAction: \addToTail)
+}.play(addAction: \addToTail);
+
+
 );
+
+~breaktrigbus.set(1);
