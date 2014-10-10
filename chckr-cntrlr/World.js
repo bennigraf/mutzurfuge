@@ -117,6 +117,11 @@ World.prototype.setOscServer = function(port, host) {
 				c.oscMMessage(args);
 			}
 		}
+		if(msg[0] == '/markerAmp') {
+			for (i in this.grids) {
+				this.grids[i].setMarkerAmp(msg[1]);
+			}
+		}
 	}.bind(this));
 }
 

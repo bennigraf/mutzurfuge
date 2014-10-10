@@ -31,6 +31,9 @@ process.on('message', function worker_message(m, handle){
 	if(m[0] == 'baseClr') {
 		gw.setBaseClr(m[1]);
 	}
+	if(m[0] == 'markerAmp') {
+		gw.setMarkerAmp(m[1]);
+	}
 });
 
 
@@ -53,10 +56,15 @@ function GridWorker(id, w, h) {
 	this.tilesWereSet = false; // only send data if this is true
 	
 	this.baseClr = new Colr({ r: 200, g: 200, b: 200, a: 1 });
+	this.markerAmp = 1;
 }
 
 GridWorker.prototype.setBaseClr = function(col) {
 	this.baseClr = new Colr(col);
+}
+GridWorker.prototype.setMarkerAmp = function(amp) {
+	this.markerAmp = amp;
+	this.tilesWereSet = true;
 }
 
 GridWorker.prototype.spawn = function() {
@@ -187,19 +195,23 @@ GridWorker.prototype.drawMarker = function() {
 		offset = [1, this.height - 1 - 7];
 	}
 	
+	var black = new Colr({ r:0, g:0, b:0, a: 1});
+	var colr = Colr.mix(this.baseClr, black, this.markerAmp * 100);
+	// console.log(colr);
+	
 	// marker is 5x5 2d array
 	// draw marker to tiles
 	for (var y = 0; y < 7; y++) {
 		for (var x = 0; x < 7; x++) {
 			// this draws the 'frame'
 			if(x == 0 || y == 0 || x == 6 || y == 6) {
-				this.tiles[x + offset[0]][y + offset[1]] = new Colr("000000");
+				this.tiles[x + offset[0]][y + offset[1]] = colr;
 			} else { // this draws the actual marker
 				if (this.marker[y-1][x-1] == 1) {
 					// omit white parts here to make marker 'transparent'
 					// this.tiles[x+1][y+1] = new Colr("FFFFFF");
 				} else {
-					this.tiles[x + offset[0]][y + offset[1]] = new Colr("000000");
+					this.tiles[x + offset[0]][y + offset[1]] = colr;
 				}
 			}
 		}

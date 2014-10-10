@@ -18,7 +18,7 @@ wrld.addGrid({ // f0
 	id: 691,
 	size: [43, 17],
 	markerpos: 'tl',
-	address: ["10.0.0.12", 5100],
+	address: ["10.0.0.12", 5101],
 	baseColor: {r: 240, g: 240, b: 240, a: 1 },
 	gravity: 'down',
 	transitions: [['top', [581]]]
@@ -36,7 +36,8 @@ wrld.addGrid({ // f2
 	id: 581,
 	size: [43, 40],
 	markerpos: 'tr',
-	address: ["10.0.0.14", 5100],
+	// address: ["10.0.0.14", 5100],
+	address: ["127.0.0.1", 5102],
 	baseColor: {r: 240, g: 240, b: 240, a: 1 },
 	gravity: 'down',
 	transitions: [['bottom', [761]], ['top', [268, 691]]] // connection also to f0
@@ -45,7 +46,7 @@ wrld.addGrid({ // f3
 	id: 761,
 	size: [30, 17],
 	markerpos: 'tl',
-	address: ["10.0.0.12", 5101],
+	address: ["10.0.0.12", 5100],
 	baseColor: {r: 240, g: 240, b: 240, a: 1 },
 	gravity: 'down',
 	transitions: [['top', [581, 286]]] // also to middle part
@@ -105,7 +106,7 @@ wrld.addGrid({ // f9
 	id: 903,
 	size: [43, 17],
 	markerpos: 'tr',
-	address: ["10.0.0.14", 5102],
+	address: ["10.0.0.16", 5100],
 	baseColor: {r: 240, g: 240, b: 240, a: 1 },
 	gravity: 'down',
 	transitions: [['bottom', [99]]] // back to f7/balkon oben
