@@ -28,7 +28,8 @@ void ProjectionSurface::drawHitmap() {
 }
 
 void ProjectionSurface::drawVisu() {
-	ofSetColor(ofColor::white);
+//	ofSetColor(ofColor::white);
+	ofSetColor(ofColor(235, 116, 5, 255));
 	float x = size.x / -2.f;
 	float y = size.y / -2.f;
 	float w = size.x;

@@ -153,6 +153,7 @@ void ofApp::update(){
 		if( deltaTime > 3000 ){
 			ofLog(OF_LOG_WARNING, "trying to connect to tcp");
 			tcpClient.setup("10.0.0.5", 12333);
+//			tcpClient.setup("192.168.1.102", 12333);
 			connectTime = ofGetElapsedTimeMillis();
 		}
 	}
@@ -167,7 +168,7 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-	float foundBoard = false;
+	bool foundBoard = false;
 	ofClear(0);
     grabber.draw(drawOffset.x, drawOffset.y, drawSize.x, drawSize.y);
 
@@ -179,6 +180,7 @@ void ofApp::draw(){
     visiFbo.begin();
     ofClear(0);
     visiFbo.end();
+
     for (int i = 0; i < aruco.getNumBoards() && hitmapPlaneCounter < 3; i++) {
         if (aruco.getBoardProbabilities()[i] > 0.03) {
             // board is in view
@@ -218,8 +220,8 @@ void ofApp::draw(){
 //    hitmapFbo.draw(0, ofGetHeight()*2, ofGetWidth(), -ofGetHeight()*2);
 
     ofSetColor(ofColor(255, 255, 255, 255));
-//    visiFbo.draw(0, ofGetHeight()*2, ofGetWidth(), -ofGetHeight()*2);
-    if(tcpClient.isConnected() && foundBoard) {
+//    if(tcpClient.isConnected() && foundBoard) {
+    if(foundBoard) {
     	visiFbo.draw(drawOffset.x, drawOffset.y + drawSize.y, drawSize.x, drawSize.y * -1);
     }
 
@@ -235,13 +237,13 @@ void ofApp::draw(){
     /*
 	ofSetHexColor(0xF00FF0);
 	ofDrawBitmapString("fps: " + ofToString(ofGetFrameRate()),700,10);
-	ofDrawBitmapString("camera fps: " + ofToString(camera_fps),700,30);
+	//ofDrawBitmapString("camera fps: " + ofToString(camera_fps),700,30);
 	ofDrawBitmapString("Well done!",700,50);
     ofDrawBitmapString("markers detected: " + ofToString(aruco.getNumMarkers()),700, 70);
-    ofDrawBitmapString(ofToString(ofGetWidth()),700, 90);
-    ofDrawBitmapString(ofToString(ofGetHeight()),700, 110);
+    ofDrawBitmapString(ofToString(ofGetWidth()), 700, 90);
+    ofDrawBitmapString(ofToString(ofGetHeight()), 700, 110);
     ofDrawBitmapString(debugMsgStr, 700, 130);
-	*/
+    //*/
 }
 
 //--------------------------------------------------------------
@@ -346,7 +348,7 @@ void ofApp::touchUp(int x, int y, int id){
 		lastAutofocus = ofGetElapsedTimef();
 	}
     hitmapFbo.readToPixels(hitmapPixels);
-    ofLog(OF_LOG_WARNING, "Event!");
+    //ofLog(OF_LOG_WARNING, "Event!");
 
     // scale clicks to fbo size
 //    int fbox = (int)(x / (float)ofGetWidth() * grabber.getWidth());
@@ -362,9 +364,9 @@ void ofApp::touchUp(int x, int y, int id){
     bool foundPlane = false;
     int psurfid = -1;
     // cout << hitmapPlaneToBoard[0] << " " << hitmapPlaneToBoard[1] << " " << hitmapPlaneToBoard[2] << endl;
-    ofLog(OF_LOG_WARNING, "event" + ofToString(x) + " " + ofToString(y));
-    ofLog(OF_LOG_WARNING, "fbo-pos " + ofToString(fbox) + " " + ofToString(fboy));
-    ofLog(OF_LOG_WARNING, "Color " + ofToString(c));
+    //ofLog(OF_LOG_WARNING, "event" + ofToString(x) + " " + ofToString(y));
+    //ofLog(OF_LOG_WARNING, "fbo-pos " + ofToString(fbox) + " " + ofToString(fboy));
+    //ofLog(OF_LOG_WARNING, "Color " + ofToString(c));
     if(c.r > 0 && c.g > 0 && c.b == 0) {
         // plane 0
         ProjectionSurface psurf = projectionSurfaces[hitmapPlaneToBoard[0]];
