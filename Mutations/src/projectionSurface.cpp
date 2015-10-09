@@ -39,6 +39,7 @@ void ProjectionSurface::drawVisu() {
 	ofLine(x+w, y+h, x, y+h);
 	ofLine(x, y+h, x, y);
 
+	/*
 	float xoffs = ofRandom(-1.f, 1.f);
 	float yoffs = ofRandom(-1.f, 1.f);
 	float c = xoffs * yoffs;
@@ -50,6 +51,20 @@ void ProjectionSurface::drawVisu() {
 	float tw = size.x / 10;
 	float th = size.y / 10;
 	ofRect(x + xoffs * (size.x-tw), y + yoffs * (size.y-th), tw, th);
+	*/
+
+	ofSetColor(ofColor(235, 116, 5, 127));
+	// draw vertical lines
+	for(int i = 0; i < 3; i++) {
+		float thisx = x + (w/4.f) * (i+1.f);
+		ofLine(thisx, y, thisx, y+h);
+	}
+	// draw horizontal lines
+	for(int i = 0; i < 2; i++) {
+		float thisy = y + (h/3.f) * (i+1.f);
+		ofLine(x, thisy, x+w, thisy);
+	}
+
 
 }
 
