@@ -1,3 +1,23 @@
+
+// defines addresses that run clients that create visual data
+// (those addresses are in the local infrastructure network)
+var MAWIADDRS = [
+	"127.0.0.1", 
+	"10.0.0.10", 
+	"10.0.0.11", 
+	"10.0.0.12", 
+	"10.0.0.13", 
+	"10.0.0.14", 
+	"10.0.0.15", 
+	"10.0.0.16", 
+	"10.0.0.17", 
+	"10.0.0.18", 
+	"10.0.0.19", 
+	"169.254.102.35", 
+	"169.254.94.222"
+];
+
+
 var net = require('net');
 var osc = require('node-osc');
 
@@ -20,7 +40,7 @@ Controller.prototype.setTcpServer = function(port, host) {
 	server.listen(port, host);
 	// console.log('Server listening on ' + server.address().address +':'+ server.address().port);
 	var masocks = [];
-	var mawiaddrs = ["127.0.0.1", "10.0.0.10", "10.0.0.11", "10.0.0.12", "10.0.0.13", "10.0.0.14", "10.0.0.15", "10.0.0.16", "10.0.0.17", "10.0.0.18", "10.0.0.19", "169.254.102.35", "169.254.94.222"];
+	var mawiaddrs = MAWIADDRS;
 	
 	server.on('connection', function(sock) {
     console.log('CONNECTED: ' + sock.remoteAddress +':'+ sock.remotePort);
