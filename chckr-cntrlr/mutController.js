@@ -18,6 +18,7 @@ var MAWIADDRS = [
 ];
 
 
+
 var net = require('net');
 var osc = require('node-osc');
 
@@ -58,6 +59,7 @@ Controller.prototype.setTcpServer = function(port, host) {
 		})
 		sock.on('data', function(data) {
 			var rawdata = data;
+			// console.log(data);
 			// console.log(this.mode);
 			if(this.mode == "grid") {
 				try {
@@ -84,11 +86,12 @@ Controller.prototype.setTcpServer = function(port, host) {
 	}.bind(this));
 }
 
-// used for SC
+// OSC "sink" to forward events to
 Controller.prototype.setOscClient = function(port, host) {
 	this.oscSndr = new osc.Client(host, port);
 }
 
+// local osc server to set controller mode
 Controller.prototype.setOscServer = function(port, host) {
 	this.oscServer = new osc.Server(port, host);
 	
@@ -107,8 +110,7 @@ Controller.prototype.setOscServer = function(port, host) {
 	}.bind(this));
 }
 
-
 var c = new Controller();
-c.setTcpServer(12333, '0.0.0.0'); // global tcp stuff
-c.setOscClient(12332, '0.0.0.0'); // CREATURES stuff (chckr-mngr)
-c.setOscServer(12331, '0.0.0.0'); // global control
+c.setTcpServer(12333, '0.0.0.0'); // global tcp connection
+c.setOscServer(12331, '0.0.0.0'); // OSC control of this server
+c.setOscClient(12332, '0.0.0.0'); // CREATURES installation (runs in chckr-mngr.js)
