@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<warpconfig version="1.0" profile="default">
+	<profile name="default">
+		<map id="1" display="1">
+			<warp method="perspective" width="2" height="2" brightness="1">
+				<controlpoint x="0" y="0"/>
+				<controlpoint x="0.887499988" y="0.1875"/>
+				<controlpoint x="1" y="1"/>
+				<controlpoint x="0.100000001" y="0.893750012"/>
+			</warp>
+		</map>
+	</profile>
+</warpconfig>
+

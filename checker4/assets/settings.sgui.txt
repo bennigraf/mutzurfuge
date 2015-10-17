@@ -1,0 +1,14 @@
+Panel : 
+Grid X : 38
+Grid Y : 5
+Separator : 
+OSC Port : 5000
+Set OSC Port : 
+Separator : 
+Playback : 
+Grid : 1
+Video : 0
+Syphon : 0
+Separator : 
+Load state : 
+Save state : 
